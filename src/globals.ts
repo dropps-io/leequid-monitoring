@@ -17,6 +17,7 @@ export const CONTRACT_MERKLE_DISTRIBUTOR = getEnvOrThrow<string>('CONTRACT_MERKL
 export const INDEXING_CONNECTION_STRING = getEnvOrThrow<string>('INDEXING_CONNECTION_STRING');
 
 export const PORT = getEnvOrThrow<number>('PORT', 3020);
+export const DEPLOY_ENV = getEnvOrThrow<string>('DEPLOY_ENV', 'dev');
 export const MONITORING_CRON = getConfigOrThrow<string>('cron_checks');
 
 export const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';

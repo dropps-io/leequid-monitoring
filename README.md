@@ -1,73 +1,76 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="200" alt="Nest Logo" /></a>
-</p>
+# leequid-monitoring
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+This repository contains the monitoring service for the [LEEQUID protocol](https://github.com/dropps-io/leequid-contracts).
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+The monitoring service is in charge to monitor the protocol. This service is watching the networks for all the events and statuses that require monitoring.
+This service can also take actions if anomalies are detected:
+- In case of warning or alert, the monitoring service will send notifications through multiple communication channels
 
-## Description
+## Configuration
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+| name                       | comment                                                                                                         |
+|----------------------------|-----------------------------------------------------------------------------------------------------------------|
+| `RPC_URL`                  | URL of the LUKSO RPC (override ARCHIVE_NODE_HOSTS)                                                              |
+| `ARCHIVE_NODE_HOSTS`       | Host names of the archive nodes used for the beacon api & RPC url                                               |
+| `ORCHESTRATOR_KEY_ADDRESS` | address of the orchestrator key                                                                                 |
+| `TWILIO_API_SID`           | twilio account or api SID                                                                                       |
+| `TWILIO_SECRET`            | twilio secret or auth token                                                                                     |
+| `TWILIO_SENDER_ID`         | twilio sender id                                                                                                |
+| `DISCORD_WEBHOOK_URL`      | discord webhook url                                                                                             |
+| `DISCORD_USER_IDS`         | discord user ids to tag in notifications. A space should be added between each id (e.g. "<@someid> <@someid>)") |
+| `POSTGRES_URI`             | Connection string of the oracle database (overrides all POSTGRES_* varenvs)                                     |
+| `POSTGRES_USER`            | User of the oracle database (default: postgres)                                                                 |
+| `POSTGRES_PASSWORD`        | Password of the oracle database (default: postgres)                                                             |
+| `POSTGRES_DB`              | Name of the oracle database (default: oracle)                                                                   |
+| `POSTGRES_HOST`            | Host of the oracle database (default: localhost)                                                                |
+| `CONTRACT_POOL`            | Address of the Pool contract                                                                                    |
+| `CONTRACT_SLYX`            | Address of the sLYX contract                                                                                    |
+| `CONTRACT_REWARDS`         | Address of the Rewards contract                                                                                 |
 
-## Installation
+# Development
 
-```bash
-$ npm install
-```
+## Pre-requisites
 
-## Running the app
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Test
+To run the project locally, you will need to [authenticate with gcloud](https://cloud.google.com/sdk/gcloud/reference/auth/login) and set the project and zone:
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+gcloud auth login --update-adc
+gcloud config set project <project_id>
+gcloud config set compute/zone <projet_zone>
 ```
 
-## Support
+If you wish to use the application with *docker-compose*, add `GCLOUD_CREDENTIALS_PATH` to your .env, with the path of
+the folder containing the gcloud_credentials folder (e.g. `C:/Users/samue/AppData/Roaming/gcloud`)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+You need to have a [GCloud storage bucket](https://cloud.google.com/storage/docs/creating-buckets) to store your deposit data.
 
-## Stay in touch
+## Contracts
 
-- Author - [Kamil Myśliwiec](https://kamilmysliwiec.com)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+You have to deploy the [LEEQUID protocol](https://github.com/dropps-io/leequid-contracts/blob/master/scripts), and fill the contracts values in the [config](./config/default.json).
 
-## License
+You may want to run a local version of the [smart contracts](https://github.com/dropps-io/leequid-contracts/blob/master/contracts).
+For that, follow the steps detailed there: [Protocol Local Deployment]( https://github.com/dropps-io/leequid-contracts/blob/master/docs/local_tests.MD).
+After following these steps, you will need to update the [config/default.json](./config/default.json) file with the deployed addresses
+(just copy the content from the`local_addresses.json` file generated in the project root, to the `contracts` section of [config/dev.json](./config/default.json)),
+or add them in the `.env` file :
+```
+CONTRACT_ORACLES=0x1234...
+CONTRACT_DEPOSIT=0x1234...
+CONTRACT_POOL=0x1234...
+CONTRACT_SLYX=0x1234...
+CONTRACT_REWARDS=0x1234...
+CONTRACT_MERKLE_DISTRIBUTOR=0x1234...
+LIQUIDITY_POOLS=0x1234...
+```
 
-Nest is [MIT licensed](LICENSE).
+## Start the project
+
+- `yarn`
+- `cp .env.example .env` and edit `.env`
+- `npm run dev` - runs the `monitoring` service
+
+### With docker (for development & integration tests)
+
+- `yarn`
+- `cp .env.example .env` and edit `.env`
+- `docker-compose up`

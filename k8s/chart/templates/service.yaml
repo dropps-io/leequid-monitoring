@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: leequid-monitoring-service-{{ .Values.deployEnv }}
+  labels:
+    app: leequid-monitoring-service-{{ .Values.deployEnv }}
+spec:
+  selector:
+    app: leequid-monitoring-{{ .Values.deployEnv }}
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: {{ .Values.targetPort }}
+  type: NodePort

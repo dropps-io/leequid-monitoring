@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: leequid-monitoring-{{ .Values.deployEnv }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: leequid-monitoring-{{ .Values.deployEnv }}
+  template:
+    metadata:
+      labels:
+        app: leequid-monitoring-{{ .Values.deployEnv }}
+    spec:
+      containers:
+        - name: monitoring-app
+          image: europe-west1-docker.pkg.dev/dropps-indexing/leequid/monitoring-app:{{ .Values.deployEnv }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ .Values.targetPort }}
+            initialDelaySeconds: 200
+          ports:
+            - containerPort: {{ .Values.targetPort }}
+          env:
+            - name: MONITORING_PORT
+              value: {{ .Values.targetPort | quote }}
+            - name: RPC_URL
+              value: {{ .Values.RPC_URL }}
+            - name: IPFS_GATEWAY_HOSTS
+              value: {{ .Values.IPFS_GATEWAY_HOSTS }}
+            - name: CONTRACT_REWARDS
+              value: {{ .Values.CONTRACT_REWARDS }}
+            - name: CONTRACT_SLYX
+              value: {{ .Values.CONTRACT_SLYX }}
+            - name: CONTRACT_POOL
+              value: {{ .Values.CONTRACT_POOL }}
+            - name: LIQUIDITY_POOLS
+              value: {{ .Values.LIQUIDITY_POOLS }}
+            - name: CONTRACT_MERKLE_DISTRIBUTOR
+              value: {{ .Values.CONTRACT_MERKLE_DISTRIBUTOR }}
+            - name: ORCHESTRATOR_KEY_ADDRESS
+              value: {{ .Values.ORCHESTRATOR_KEY_ADDRESS }}
+            - name: INDEXING_CONNECTION_STRING
+              valueFrom:
+                configMapKeyRef:
+                  name: monitoring-config-{{ .Values.deployEnv }}
+                  key: LUKSO_DATA_CONNECTION_STRING
+            - name: POSTGRES_USER
+              value: {{ .Values.POSTGRES_USER }}
+            - name: POSTGRES_DB
+              value: {{ .Values.POSTGRES_DB }}
+            - name: POSTGRES_HOST
+              value: {{ .Values.POSTGRES_HOST }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgresql
+                  key: password

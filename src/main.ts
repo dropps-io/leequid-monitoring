@@ -9,7 +9,7 @@ async function bootstrap() {
 
   if (DEPLOY_ENV !== 'prod') {
     app.enableCors({
-      origin: 'localhost',
+      origin: 'http://localhost:3000',
       methods: 'GET',
     });
   }

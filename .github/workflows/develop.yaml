@@ -98,7 +98,7 @@ jobs:
 
       - name: Update Helm Chart with New Image
         run: |
-          helm upgrade leequid-monitoring-staging k8s/chart -f k8s/chart/values-staging.yaml -n leequid
+          helm upgrade --install leequid-monitoring-staging k8s/chart -f k8s/chart/values-staging.yaml -n leequid
 
       - name: Trigger Kubernetes Rollout
         run: |

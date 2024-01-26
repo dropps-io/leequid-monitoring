@@ -23,7 +23,7 @@ spec:
           ports:
             - containerPort: {{ .Values.targetPort }}
           env:
-            - name: MONITORING_PORT
+            - name: PORT
               value: {{ .Values.targetPort | quote }}
             - name: RPC_URL
               value: {{ .Values.RPC_URL }}

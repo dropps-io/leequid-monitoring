@@ -8,7 +8,8 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   if (DEPLOY_ENV !== 'prod') {
-    app.enableCors({origin: '*'});
+    app.enableCors({origin: '*', methods: 'GET',
+      allowedHeaders: 'Content-Type, Accept',});
   }
 
   await app.listen(PORT);

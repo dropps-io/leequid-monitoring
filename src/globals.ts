@@ -1,4 +1,4 @@
-import {getConfigOrThrow, getEnv, getEnvOrThrow} from "./utils/get-or-throw";
+import { getConfigOrThrow, getEnv, getEnvOrThrow } from './utils/get-or-throw';
 
 const ARCHIVE_NODE_HOSTS = (getEnv<string>('ARCHIVE_NODE_HOSTS') || '').split(',');
 

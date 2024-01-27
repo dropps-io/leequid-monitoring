@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {DepositDataProofDto} from "./deposit-data.dto";
+
+import { DepositDataProofDto } from './deposit-data.dto';
 
 export class OracleRegisterValidatorsDto {
   @ApiProperty({

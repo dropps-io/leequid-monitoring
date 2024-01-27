@@ -2,20 +2,17 @@ import { Controller, Get, Param, Query, Res, UseGuards } from '@nestjs/common';
 import winston from 'winston';
 import { Response } from 'express';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import {LoggerService} from "./logger/logger.service";
-import {AppService} from "./app.service";
-import {throwHTTPError} from "./utils/throw-http-error";
-import {SUPPORTED_CURRENCY} from "./rewards-tracking/types";
 
+import { LoggerService } from './logger/logger.service';
+import { AppService } from './app.service';
+import { throwHTTPError } from './utils/throw-http-error';
+import { SUPPORTED_CURRENCY } from './rewards-tracking/types';
 
 @Controller()
 @UseGuards(ThrottlerGuard)
 export class AppController {
   protected logger: winston.Logger;
-  constructor(
-    protected loggerService: LoggerService,
-    protected monitoringService: AppService,
-  ) {
+  constructor(protected loggerService: LoggerService, protected monitoringService: AppService) {
     this.logger = loggerService.getChildLogger('MonitoringController');
   }
   @Get('/healthz') healthz(): string {

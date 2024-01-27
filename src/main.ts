@@ -1,17 +1,12 @@
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from './app.module';
-import {seedMonitoring} from "./db-client/seed";
-import {DEPLOY_ENV, PORT} from "./globals";
 
-async function bootstrap() {
+import { AppModule } from './app.module';
+import { seedMonitoring } from './db-client/seed';
+import { PORT } from './globals';
+
+async function bootstrap(): Promise<void> {
   await seedMonitoring();
   const app = await NestFactory.create(AppModule);
-
-  if (DEPLOY_ENV !== 'prod') {
-    app.enableCors({origin: '*', methods: 'GET',
-      allowedHeaders: 'Content-Type, Accept',});
-  }
-
   await app.listen(PORT);
 }
 bootstrap();

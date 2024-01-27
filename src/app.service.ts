@@ -1,23 +1,22 @@
 import { Injectable } from '@nestjs/common';
-import {EthersService} from "./ethers/ethers.service";
-import {DbClientService} from "./db-client/db-client.service";
-import {CONTRACT_POOL, CONTRACT_REWARDS, ORCHESTRATOR_KEY_ADDRESS} from "./globals";
-import {formatEther} from "ethers";
-import {RewardsContractStateDto} from "./dto/rewards-contract-state.dto";
-import {SLyxContractStateDto} from "./dto/slyx-contract-state.dto";
-import {PoolContractStateDto} from "./dto/pool-contract-state.dto";
-import {LiquidityPoolContractStateDto} from "./dto/liquidity-pool-contract-state.dto";
-import {SUPPORTED_CURRENCY} from "./rewards-tracking/types";
-import {RewardsBalance} from "./db-client/types";
+import { formatEther } from 'ethers';
+
+import { EthersService } from './ethers/ethers.service';
+import { DbClientService } from './db-client/db-client.service';
+import { CONTRACT_POOL, CONTRACT_REWARDS, ORCHESTRATOR_KEY_ADDRESS } from './globals';
+import { RewardsContractStateDto } from './dto/rewards-contract-state.dto';
+import { SLyxContractStateDto } from './dto/slyx-contract-state.dto';
+import { PoolContractStateDto } from './dto/pool-contract-state.dto';
+import { LiquidityPoolContractStateDto } from './dto/liquidity-pool-contract-state.dto';
+import { SUPPORTED_CURRENCY } from './rewards-tracking/types';
+import { RewardsBalance } from './db-client/types';
 
 @Injectable()
 export class AppService {
-
   constructor(
     protected readonly ethersService: EthersService,
     protected readonly dbClient: DbClientService,
-  ) {
-  }
+  ) {}
 
   async fetchProtocolState(): Promise<{ stakers: number; totalStaked: number }> {
     const stakers = await this.dbClient.fetchNumberOfStakers();

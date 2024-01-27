@@ -4,7 +4,7 @@ import winston from 'winston';
 
 import { CONTRACT_SLYX, INDEXING_CONNECTION_STRING, POSTGRES_URI } from '../globals';
 import { DB_MONITORING_TABLE, LyxPriceTable, RewardsBalance } from './types';
-import {LoggerService} from "../logger/logger.service";
+import { LoggerService } from '../logger/logger.service';
 
 const TRANSFER_EVENT_NAME = 'Transfer';
 

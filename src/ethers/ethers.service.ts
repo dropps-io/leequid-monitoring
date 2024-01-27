@@ -1,12 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { Contract, JsonRpcProvider } from 'ethers';
 import winston from 'winston';
+
 import rewardAbi from '../abi/Rewards.json';
 import stakedLyxTokenAbi from '../abi/StakedLyxToken.json';
 import poolAbi from '../abi/Pool.json';
 import uniswapPair from '../abi/UniswapV2Pair.json';
 import merkleDistributorABI from '../abi/MerkleDistributor.json';
-
 import {
   CONTRACT_REWARDS,
   RPC_URL,
@@ -17,8 +17,8 @@ import {
 } from '../globals';
 import { MerkleRootUpdatedEvent, RewardsUpdatedEvent } from './events';
 import { CashoutEvent } from '../types/events';
-import {LoggerService} from "../logger/logger.service";
-import {DebugLogger} from "../decorators/debug-logging.decorator";
+import { LoggerService } from '../logger/logger.service';
+import { DebugLogger } from '../decorators/debug-logging.decorator';
 
 @Injectable()
 export class EthersService {

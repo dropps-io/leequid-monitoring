@@ -19,7 +19,6 @@ spec:
             httpGet:
               path: /healthz
               port: {{ .Values.targetPort }}
-            initialDelaySeconds: 200
           ports:
             - containerPort: {{ .Values.targetPort }}
           env:

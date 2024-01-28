@@ -9,11 +9,7 @@ async function bootstrap(): Promise<void> {
 
   const app = await NestFactory.create(AppModule);
 
-  app.enableCors({
-    origin: ['https://staging.app.leequid.io', 'https://app.leequid.io'],
-    methods: 'GET',
-  });
-
+  app.enableCors();
   await app.listen(PORT);
 }
 bootstrap();

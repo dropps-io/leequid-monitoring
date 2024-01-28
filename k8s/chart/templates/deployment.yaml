@@ -15,6 +15,7 @@ spec:
       containers:
         - name: monitoring-app
           image: europe-west1-docker.pkg.dev/dropps-indexing/leequid/monitoring-app:{{ .Values.deployEnv }}
+          imagePullPolicy: Always
           readinessProbe:
             httpGet:
               path: /healthz

@@ -37,6 +37,8 @@ spec:
               value: {{ .Values.CONTRACT_POOL }}
             - name: LIQUIDITY_POOLS
               value: {{ .Values.LIQUIDITY_POOLS }}
+            - name: CONTRACT_ORACLES
+              value: {{ .Values.CONTRACT_ORACLES }}
             - name: CONTRACT_MERKLE_DISTRIBUTOR
               value: {{ .Values.CONTRACT_MERKLE_DISTRIBUTOR }}
             - name: ORCHESTRATOR_KEY_ADDRESS

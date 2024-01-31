@@ -7,6 +7,7 @@ import stakedLyxTokenAbi from '../abi/StakedLyxToken.json';
 import poolAbi from '../abi/Pool.json';
 import uniswapPair from '../abi/UniswapV2Pair.json';
 import merkleDistributorABI from '../abi/MerkleDistributor.json';
+import oraclesABI from '../abi/Oracles.json';
 import {
   CONTRACT_REWARDS,
   RPC_URL,
@@ -14,8 +15,9 @@ import {
   CONTRACT_POOL,
   LIQUIDITY_POOLS,
   CONTRACT_MERKLE_DISTRIBUTOR,
+  CONTRACT_ORACLES,
 } from '../globals';
-import { MerkleRootUpdatedEvent, RewardsUpdatedEvent } from './events';
+import { MerkleRootUpdatedEvent, RewardsUpdatedEvent, RewardsVoteSubmitted } from './events';
 import { CashoutEvent } from '../types/events';
 import { LoggerService } from '../logger/logger.service';
 import { DebugLogger } from '../decorators/debug-logging.decorator';
@@ -30,6 +32,7 @@ export class EthersService {
   private pool: Contract;
   private liquidityPair: Contract;
   private merkleDistributor: Contract;
+  private oracles: Contract;
 
   constructor(protected readonly loggerService: LoggerService) {
     // Initialize provider with RPC URL
@@ -47,6 +50,7 @@ export class EthersService {
       merkleDistributorABI,
       this.provider,
     );
+    this.oracles = new Contract(CONTRACT_ORACLES, oraclesABI, this.provider);
   }
 
   @DebugLogger()
@@ -123,16 +127,15 @@ export class EthersService {
   }
 
   @DebugLogger()
-  public async fetchRewardsUpdatedEventAtBlock(block: number): Promise<RewardsUpdatedEvent> {
-    const res = (await this.rewardsContract.queryFilter(
+  public async fetchRewardsUpdatedEvents(
+    fromBlock: number,
+    toBlock?: number,
+  ): Promise<RewardsUpdatedEvent[]> {
+    return (await this.rewardsContract.queryFilter(
       'RewardsUpdated',
-      block,
-      block,
+      fromBlock,
+      toBlock,
     )) as unknown as RewardsUpdatedEvent[];
-
-    if (!res || res.length === 0)
-      throw new Error(`No RewardsUpdated event found at block ${block}`);
-    return res[0];
   }
 
   public async fetchCashOutEventsFor(address: string, fromBlock: number): Promise<CashoutEvent[]> {
@@ -205,5 +208,18 @@ export class EthersService {
 
   public async getReserves(): Promise<bigint[]> {
     return await this.liquidityPair.getReserves();
+  }
+
+  /* ------- ORACLES ------- */
+
+  public async fetchRewardsVotes(
+    fromBlock: number,
+    toBlock?: number,
+  ): Promise<RewardsVoteSubmitted[]> {
+    return (await this.oracles.queryFilter(
+      'RewardsVoteSubmitted',
+      fromBlock,
+      toBlock,
+    )) as unknown as RewardsVoteSubmitted[];
   }
 }

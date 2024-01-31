@@ -19,7 +19,12 @@ export class AppController {
     return 'ok';
   }
 
-  @Get('/state') async state(): Promise<{ stakers: number; totalStaked: number }> {
+  @Get('/state') async state(): Promise<{
+    stakers: number;
+    totalStaked: number;
+    APR: number;
+    APY: number;
+  }> {
     try {
       return await this.monitoringService.fetchProtocolState();
     } catch (error) {

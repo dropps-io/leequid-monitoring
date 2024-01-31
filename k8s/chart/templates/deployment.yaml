@@ -15,11 +15,11 @@ spec:
       containers:
         - name: monitoring-app
           image: europe-west1-docker.pkg.dev/dropps-indexing/leequid/monitoring-app:{{ .Values.deployEnv }}
+          imagePullPolicy: Always
           readinessProbe:
             httpGet:
               path: /healthz
               port: {{ .Values.targetPort }}
-            initialDelaySeconds: 200
           ports:
             - containerPort: {{ .Values.targetPort }}
           env:
@@ -37,6 +37,8 @@ spec:
               value: {{ .Values.CONTRACT_POOL }}
             - name: LIQUIDITY_POOLS
               value: {{ .Values.LIQUIDITY_POOLS }}
+            - name: CONTRACT_ORACLES
+              value: {{ .Values.CONTRACT_ORACLES }}
             - name: CONTRACT_MERKLE_DISTRIBUTOR
               value: {{ .Values.CONTRACT_MERKLE_DISTRIBUTOR }}
             - name: ORCHESTRATOR_KEY_ADDRESS

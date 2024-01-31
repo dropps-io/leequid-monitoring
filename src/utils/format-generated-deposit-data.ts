@@ -1,6 +1,5 @@
-
 import { GeneratedDepositData } from '../types/generated-deposit-data';
-import {DepositDataDto} from "../dto/deposit-data.dto";
+import { DepositDataDto } from '../dto/deposit-data.dto';
 
 export const formatGeneratedDepositData = (
   generatedDepositData: GeneratedDepositData[],

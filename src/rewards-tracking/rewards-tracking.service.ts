@@ -2,18 +2,21 @@ import { Injectable } from '@nestjs/common';
 import winston from 'winston';
 import pLimit from 'p-limit';
 
-
 import { EthersService } from '../ethers/ethers.service';
 import { DbClientService } from '../db-client/db-client.service';
 import { CashoutEvent } from '../types/events';
 import { COINGECKO_API_URL, COINGECKO_LYX_ID } from '../globals';
 import { LyxPriceTable, RewardsBalance } from '../db-client/types';
-import {LoggerService} from "../logger/logger.service";
-import {FetcherService} from "../fetcher/fetcher.service";
-import {DebugLogger} from "../decorators/debug-logging.decorator";
-import {PreventOverlap} from "../decorators/prevent-overlap.decorator";
-import {ExceptionHandler} from "../decorators/exception-handler.decorator";
-import {MerkleDistribution, MerkleDistributions, MerkleResponse} from "../types/merkle-distribution";
+import { LoggerService } from '../logger/logger.service';
+import { FetcherService } from '../fetcher/fetcher.service';
+import { DebugLogger } from '../decorators/debug-logging.decorator';
+import { PreventOverlap } from '../decorators/prevent-overlap.decorator';
+import { ExceptionHandler } from '../decorators/exception-handler.decorator';
+import {
+  MerkleDistribution,
+  MerkleDistributions,
+  MerkleResponse,
+} from '../types/merkle-distribution';
 
 const limit = pLimit(10); // limit to 5 concurrent promises
 

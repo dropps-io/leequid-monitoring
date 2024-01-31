@@ -1,4 +1,4 @@
-import {getConfigOrThrow, getEnv, getEnvOrThrow} from "./utils/get-or-throw";
+import { getConfigOrThrow, getEnv, getEnvOrThrow } from './utils/get-or-throw';
 
 const ARCHIVE_NODE_HOSTS = (getEnv<string>('ARCHIVE_NODE_HOSTS') || '').split(',');
 
@@ -11,6 +11,7 @@ export const ORCHESTRATOR_KEY_ADDRESS: string = getEnvOrThrow('ORCHESTRATOR_KEY_
 export const CONTRACT_REWARDS: string = getEnvOrThrow<string>('CONTRACT_REWARDS');
 export const CONTRACT_SLYX = getEnvOrThrow<string>('CONTRACT_SLYX');
 export const CONTRACT_POOL = getEnvOrThrow<string>('CONTRACT_POOL');
+export const CONTRACT_ORACLES = getEnvOrThrow<string>('CONTRACT_ORACLES');
 export const LIQUIDITY_POOLS = (getEnv<string>('LIQUIDITY_POOLS') || '').split(',');
 export const CONTRACT_MERKLE_DISTRIBUTOR = getEnvOrThrow<string>('CONTRACT_MERKLE_DISTRIBUTOR');
 

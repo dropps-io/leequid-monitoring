@@ -1,5 +1,6 @@
 import config from 'config';
-import {setupEnv} from "./setup-env";
+
+import { setupEnv } from './setup-env';
 
 setupEnv();
 

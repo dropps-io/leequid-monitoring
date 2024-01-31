@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import axios from 'axios';
-import {DebugLogger} from "../decorators/debug-logging.decorator";
-import {IPFS_GATEWAYS} from "../globals";
-import {formatUrl} from "../utils/format-url";
-import {sleep} from "../utils/sleep";
 
+import { DebugLogger } from '../decorators/debug-logging.decorator';
+import { IPFS_GATEWAYS } from '../globals';
+import { formatUrl } from '../utils/format-url';
+import { sleep } from '../utils/sleep';
 
 @Injectable()
 export class FetcherService {

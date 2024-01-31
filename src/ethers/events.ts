@@ -16,6 +16,15 @@ export interface RewardsUpdatedEvent extends AnyEvent {
   };
 }
 
+export interface RewardsVoteSubmitted extends AnyEvent {
+  args: {
+    sender: string;
+    totalRewards: string;
+    activatedValidators: string;
+    exitedValidators: string;
+  };
+}
+
 export interface AnyEvent {
   event: string;
   blockNumber: number;

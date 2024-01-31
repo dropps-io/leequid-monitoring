@@ -3,7 +3,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 
 import { SchedulingService } from './scheduling.service';
 import { RewardsTrackingModule } from '../rewards-tracking/rewards-tracking.module';
-import {LoggerModule} from "../logger/logger.module";
+import { LoggerModule } from '../logger/logger.module';
 
 @Module({
   imports: [LoggerModule, ScheduleModule.forRoot(), RewardsTrackingModule],

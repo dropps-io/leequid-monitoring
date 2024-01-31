@@ -1,5 +1,6 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {DepositDataDto} from "./deposit-data.dto";
+
+import { DepositDataDto } from './deposit-data.dto';
 
 export class ActivateValidatorsDto {
   @ApiProperty({

@@ -1,4 +1,4 @@
-import {sleep} from "./sleep";
+import { sleep } from './sleep';
 
 export const retry = async <T>(fn: () => Promise<T>, retries = 2, delay = 100): Promise<T> => {
   try {

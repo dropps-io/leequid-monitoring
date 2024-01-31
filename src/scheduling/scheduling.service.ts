@@ -4,7 +4,7 @@ import { Cron } from '@nestjs/schedule';
 
 import { RewardsTrackingService } from '../rewards-tracking/rewards-tracking.service';
 import { MONITORING_CRON } from '../globals';
-import {LoggerService} from "../logger/logger.service";
+import { LoggerService } from '../logger/logger.service';
 
 @Injectable()
 export class SchedulingService {

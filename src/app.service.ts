@@ -1,33 +1,41 @@
 import { Injectable } from '@nestjs/common';
-import {EthersService} from "./ethers/ethers.service";
-import {DbClientService} from "./db-client/db-client.service";
-import {CONTRACT_POOL, CONTRACT_REWARDS, ORCHESTRATOR_KEY_ADDRESS} from "./globals";
-import {formatEther} from "ethers";
-import {RewardsContractStateDto} from "./dto/rewards-contract-state.dto";
-import {SLyxContractStateDto} from "./dto/slyx-contract-state.dto";
-import {PoolContractStateDto} from "./dto/pool-contract-state.dto";
-import {LiquidityPoolContractStateDto} from "./dto/liquidity-pool-contract-state.dto";
-import {SUPPORTED_CURRENCY} from "./rewards-tracking/types";
-import {RewardsBalance} from "./db-client/types";
+import { formatEther, parseEther } from 'ethers';
+
+import { EthersService } from './ethers/ethers.service';
+import { DbClientService } from './db-client/db-client.service';
+import { CONTRACT_POOL, CONTRACT_REWARDS, ORCHESTRATOR_KEY_ADDRESS } from './globals';
+import { RewardsContractStateDto } from './dto/rewards-contract-state.dto';
+import { SLyxContractStateDto } from './dto/slyx-contract-state.dto';
+import { PoolContractStateDto } from './dto/pool-contract-state.dto';
+import { LiquidityPoolContractStateDto } from './dto/liquidity-pool-contract-state.dto';
+import { SUPPORTED_CURRENCY } from './rewards-tracking/types';
+import { RewardsBalance } from './db-client/types';
 
 @Injectable()
 export class AppService {
-
   constructor(
     protected readonly ethersService: EthersService,
     protected readonly dbClient: DbClientService,
-  ) {
-  }
+  ) {}
 
-  async fetchProtocolState(): Promise<{ stakers: number; totalStaked: number }> {
+  async fetchProtocolState(): Promise<{
+    stakers: number;
+    totalStaked: number;
+    APR: number;
+    APY: number;
+  }> {
     const stakers = await this.dbClient.fetchNumberOfStakers();
     const pendingValidators = await this.ethersService.pendingValidators();
     const activatedValidators = await this.ethersService.activatedValidators();
+    const exitedValidators = await this.ethersService.exitedValidators();
     const poolBalance = await this.ethersService.balanceOf(CONTRACT_POOL);
     const totalStaked =
-      (Number(pendingValidators) + Number(activatedValidators)) * 32 +
+      (Number(pendingValidators) + Number(activatedValidators) - Number(exitedValidators)) * 32 +
       parseInt(formatEther(poolBalance));
-    return { stakers, totalStaked };
+
+    const APR = await this.getSevenDaysAPR();
+    const APY = ((1 + APR / 100 / 365) ** 365 - 1) * 100;
+    return { stakers, totalStaked, APR, APY };
   }
 
   async fetchRewardsContractState(): Promise<RewardsContractStateDto> {
@@ -208,5 +216,39 @@ export class AppService {
         price: lyxPrices.find((price) => price.blockNumber === row.blockNumber)?.[currency],
       };
     });
+  }
+
+  protected async getSevenDaysAPR(): Promise<number> {
+    const FACTORING = 1_000_000;
+    const FACTORING_BN = BigInt(FACTORING);
+
+    const sevenDaysInBlocks = 49_983;
+    const currentBlock: number = await this.ethersService.fetchCurrentBlockNumber();
+    const rewardsUpdatedEvents = await this.ethersService.fetchRewardsUpdatedEvents(
+      currentBlock - sevenDaysInBlocks,
+    );
+    const rewardUpdateVotes = await this.ethersService.fetchRewardsVotes(
+      currentBlock - sevenDaysInBlocks,
+    );
+
+    const sevenDaysRewards = rewardsUpdatedEvents.reduce(
+      (acc, event) => acc + BigInt(event.args.periodRewards),
+      BigInt(0),
+    );
+    const sumEffectiveValidators = rewardUpdateVotes.reduce(
+      (acc, event) =>
+        acc + Number(event.args.activatedValidators) - Number(event.args.exitedValidators),
+      0,
+    );
+
+    const avSLyxSevenDays = parseEther(
+      ((sumEffectiveValidators / rewardUpdateVotes.length) * 32).toString(),
+    );
+
+    return (
+      (Number(((sevenDaysRewards * FACTORING_BN) / avSLyxSevenDays / BigInt(7)) * BigInt(365)) /
+        FACTORING) *
+      100
+    );
   }
 }

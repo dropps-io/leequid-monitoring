@@ -4,8 +4,8 @@ import { RewardsTrackingService } from './rewards-tracking.service';
 import { EthersService } from '../ethers/ethers.service';
 import { DbClientService } from '../db-client/db-client.service';
 import { RewardsBalance } from '../db-client/types';
-import {FetcherService} from "../fetcher/fetcher.service";
-import {LoggerService} from "../logger/logger.service";
+import { FetcherService } from '../fetcher/fetcher.service';
+import { LoggerService } from '../logger/logger.service';
 
 // Mock factories for services
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

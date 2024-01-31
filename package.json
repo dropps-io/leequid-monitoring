@@ -17,8 +17,7 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
-    "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json"
+    "lint:fix": "eslint \"{src,libs,test,types,scripts,utils,shared,mocks}/**/*{.ts,.js}\" --fix"
   },
   "dependencies": {
     "@nestjs/common": "^9.0.0",
@@ -31,12 +30,12 @@
     "config": "^3.3.10",
     "dotenv": "^16.4.1",
     "ethers": "^6.10.0",
+    "p-limit": "3.1.0",
     "pg": "^8.11.3",
     "reflect-metadata": "^0.1.13",
     "rimraf": "^3.0.2",
     "rxjs": "^7.2.0",
-    "winston": "^3.11.0",
-    "p-limit": "3.1.0"
+    "winston": "^3.11.0"
   },
   "devDependencies": {
     "@nestjs/cli": "^9.0.0",
@@ -52,6 +51,7 @@
     "@typescript-eslint/parser": "^5.0.0",
     "eslint": "^8.0.1",
     "eslint-config-prettier": "^8.3.0",
+    "eslint-plugin-import": "^2.29.1",
     "eslint-plugin-prettier": "^4.0.0",
     "jest": "28.1.3",
     "prettier": "^2.3.2",

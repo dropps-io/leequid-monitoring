@@ -21,6 +21,9 @@ export const PORT = getEnvOrThrow<number>('PORT', 3020);
 export const DEPLOY_ENV = getEnvOrThrow<string>('DEPLOY_ENV', 'dev');
 export const MONITORING_CRON = getConfigOrThrow<string>('cron_checks');
 
+export const OPERATOR_LEEQUID_ADR = getEnvOrThrow<string>('OPERATOR_LEEQUID_ADR');
+export const OPERATOR_STAKELAB_ADR = getEnvOrThrow<string>('OPERATOR_STAKELAB_ADR');
+
 export const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
 export const COINGECKO_LYX_ID = 'lukso-token-2';
 

@@ -3,18 +3,26 @@ import { formatEther, parseEther } from 'ethers';
 
 import { EthersService } from './ethers/ethers.service';
 import { DbClientService } from './db-client/db-client.service';
-import { CONTRACT_POOL, CONTRACT_REWARDS, ORCHESTRATOR_KEY_ADDRESS } from './globals';
+import {
+  CONTRACT_POOL,
+  CONTRACT_REWARDS,
+  OPERATOR_LEEQUID_ADR,
+  OPERATOR_STAKELAB_ADR,
+  ORCHESTRATOR_KEY_ADDRESS,
+} from './globals';
 import { RewardsContractStateDto } from './dto/rewards-contract-state.dto';
 import { SLyxContractStateDto } from './dto/slyx-contract-state.dto';
 import { PoolContractStateDto } from './dto/pool-contract-state.dto';
 import { LiquidityPoolContractStateDto } from './dto/liquidity-pool-contract-state.dto';
 import { SUPPORTED_CURRENCY } from './rewards-tracking/types';
 import { RewardsBalance } from './db-client/types';
+import { RewardsTrackingService } from './rewards-tracking/rewards-tracking.service';
 
 @Injectable()
 export class AppService {
   constructor(
     protected readonly ethersService: EthersService,
+    protected readonly rewardTracking: RewardsTrackingService,
     protected readonly dbClient: DbClientService,
   ) {}
 
@@ -41,32 +49,42 @@ export class AppService {
   async fetchRewardsContractState(): Promise<RewardsContractStateDto> {
     const [
       contractBalance,
-      protocolFeeRecipient,
       protocolFee,
       totalRewards,
       totalFeesCollected,
       totalCashedOut,
       rewardPerToken,
       totalAvailableRewards,
+      merkleDistribution,
+      leequidRewardsBalance,
+      stakelabRewardsBalance,
     ] = await Promise.all([
       this.ethersService.balanceOf(CONTRACT_REWARDS),
-      this.ethersService.protocolFeeRecipient(),
       this.ethersService.protocolFee(),
       this.ethersService.totalRewards(),
       this.ethersService.totalFeesCollected(),
       this.ethersService.totalCashedOut(),
       this.ethersService.rewardPerToken(),
       this.ethersService.totalAvailableRewards(),
+      this.rewardTracking.fetchMerkleDistribution(),
+      this.ethersService.rewardsBalanceOf(OPERATOR_LEEQUID_ADR),
+      this.ethersService.rewardsBalanceOf(OPERATOR_STAKELAB_ADR),
     ]);
-
-    const feeRecipientRewardsBalance = await this.ethersService.rewardsBalanceOf(
-      protocolFeeRecipient,
-    );
 
     return {
       contractBalance: contractBalance.toString(),
-      protocolFeeRecipient,
-      feeRecipientRewardsBalance: feeRecipientRewardsBalance.toString(),
+      leequidRewardsBalance: (
+        leequidRewardsBalance +
+        (merkleDistribution[OPERATOR_LEEQUID_ADR]
+          ? BigInt(merkleDistribution[OPERATOR_LEEQUID_ADR].values[0])
+          : BigInt(0))
+      ).toString(),
+      stakelabRewardsBalance: (
+        stakelabRewardsBalance +
+        (merkleDistribution[OPERATOR_STAKELAB_ADR]
+          ? BigInt(merkleDistribution[OPERATOR_STAKELAB_ADR].values[0])
+          : BigInt(0))
+      ).toString(),
       protocolFee: parseInt(protocolFee.toString()) / 100,
       totalRewards: totalRewards.toString(),
       totalFeesCollected: totalFeesCollected.toString(),
@@ -172,7 +190,8 @@ export class AppService {
     metrics += `rewards_contract_total_cashed_out ${rewardsContractState.totalCashedOut}\n`;
     metrics += `rewards_contract_reward_per_token ${rewardsContractState.rewardPerToken}\n`;
     metrics += `rewards_contract_total_available_rewards ${rewardsContractState.totalAvailableRewards}\n`;
-    metrics += `rewards_contract_fee_recipient_rewards_balance ${rewardsContractState.feeRecipientRewardsBalance}\n`;
+    metrics += `rewards_contract_leequid_rewards_balance ${rewardsContractState.leequidRewardsBalance}\n`;
+    metrics += `rewards_contract_stakelab_rewards_balance ${rewardsContractState.stakelabRewardsBalance}\n`;
     metrics += `slyx_contract_total_claimable_unstakes ${slyxContractState.totalClaimableUnstakes}\n`;
     metrics += `slyx_contract_total_pending_unstake ${slyxContractState.totalPendingUnstake}\n`;
     metrics += `slyx_contract_total_unstaked ${slyxContractState.totalUnstaked}\n`;

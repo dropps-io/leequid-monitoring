@@ -129,7 +129,7 @@ export class RewardsTrackingService {
   }
 
   @DebugLogger()
-  protected async fetchMerkleDistribution(): Promise<MerkleDistributions> {
+  public async fetchMerkleDistribution(): Promise<MerkleDistributions> {
     const latestMerkleUpdate = await this.ethersService.fetchLatestMerkleRootUpdatedEvent();
     const res = await this.fetcherService.fetch<MerkleResponse>(
       latestMerkleUpdate.args.merkleProofs,

@@ -10,20 +10,20 @@ export class RewardsContractStateDto {
   readonly contractBalance: string;
 
   @ApiProperty({
-    name: 'feeRecipientRewardsBalance',
-    description: 'The amount of rewards available for the fee recipient, in wei',
+    name: 'leequidRewardsBalance',
+    description: 'The amount of rewards available for leequid, in wei',
     example: '10000000000000',
     required: true,
   })
-  readonly feeRecipientRewardsBalance: string;
+  readonly leequidRewardsBalance: string;
 
   @ApiProperty({
-    name: 'protocolFeeRecipient',
-    description: 'The address of the protocol fee recipient',
-    example: '0x123...',
+    name: 'stakelabRewardsBalance',
+    description: 'The amount of rewards available for the stakelab, in wei',
+    example: '10000000000000',
     required: true,
   })
-  readonly protocolFeeRecipient: string;
+  readonly stakelabRewardsBalance: string;
 
   @ApiProperty({
     name: 'protocolFee',

@@ -119,11 +119,11 @@ export class DbClientService {
 
     // Build the placeholders array and values array.
     rows.forEach((row, index) => {
-      const baseIndex = index * 6;
+      const baseIndex = index * 7;
       placeholders.push(
         `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${
           baseIndex + 5
-        }, $${baseIndex + 6})`,
+        }, $${baseIndex + 6}, $${baseIndex + 7})`,
       );
       values.push(
         row.address,
@@ -132,6 +132,8 @@ export class DbClientService {
         row.currentBalance,
         row.balanceChange,
         row.totalRewards,
+        row.totalRewards,
+        row.balanceSLyx,
       );
     });
 

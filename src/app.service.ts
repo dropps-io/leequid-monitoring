@@ -233,6 +233,7 @@ export class AppService {
         balanceChange: row.balanceChange,
         totalRewards: row.totalRewards,
         price: lyxPrices.find((price) => price.blockNumber === row.blockNumber)?.[currency],
+        balanceSLyx: row.balanceSLyx,
       };
     });
   }

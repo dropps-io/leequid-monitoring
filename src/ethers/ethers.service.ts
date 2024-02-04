@@ -150,6 +150,10 @@ export class EthersService {
 
   /* ------- SLYX CONTRACT ------- */
 
+  public async sLyxBalanceOf(address: string): Promise<bigint> {
+    return await this.stakedLyxToken.balanceOf(address);
+  }
+
   public async totalClaimableUnstakes(): Promise<bigint> {
     return await this.stakedLyxToken.totalClaimableUnstakes();
   }

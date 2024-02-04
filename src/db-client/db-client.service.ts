@@ -132,14 +132,13 @@ export class DbClientService {
         row.currentBalance,
         row.balanceChange,
         row.totalRewards,
-        row.totalRewards,
         row.balanceSLyx,
       );
     });
 
     const query = `
     INSERT INTO ${DB_MONITORING_TABLE.REWARDS_BALANCE}
-      ("address", "blockNumber", "blockDate", "currentBalance", "balanceChange", "totalRewards")
+      ("address", "blockNumber", "blockDate", "currentBalance", "balanceChange", "totalRewards", "balanceSLyx")
     VALUES ${placeholders.join(', ')}
     ON CONFLICT ("address", "blockNumber") DO NOTHING;
   `;

@@ -143,6 +143,7 @@ describe('RewardsTrackingService', () => {
           currentBalance: '100',
           balanceChange: '50',
           totalRewards: '200', // Previous total + balance change
+          balanceSLyx: '0',
         },
         {
           address: testAddresses[1],
@@ -151,6 +152,7 @@ describe('RewardsTrackingService', () => {
           currentBalance: '100',
           balanceChange: '100',
           totalRewards: '100', // Previous total + balance change
+          balanceSLyx: '0',
         },
         {
           address: testAddresses[2],
@@ -159,6 +161,7 @@ describe('RewardsTrackingService', () => {
           currentBalance: '100',
           balanceChange: '100',
           totalRewards: '100', // Previous total + balance change
+          balanceSLyx: '0',
         },
       ];
 
@@ -216,6 +219,7 @@ describe('RewardsTrackingService', () => {
           currentBalance: '100',
           balanceChange: '100',
           totalRewards: '250', // Previous total + balance change
+          balanceSLyx: '0',
         },
       ];
 
@@ -265,6 +269,7 @@ describe('RewardsTrackingService', () => {
           currentBalance: '150',
           balanceChange: '100',
           totalRewards: '250', // Previous total + balance change
+          balanceSLyx: '0',
         },
       ];
 

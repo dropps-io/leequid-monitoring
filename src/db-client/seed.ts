@@ -84,6 +84,27 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
     )
   `);
 
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT} (
+      "blockNumber" INT NOT NULL PRIMARY KEY,
+      "date" TIMESTAMPTZ NOT NULL,
+      "totalStaked" VARCHAR(26) NOT NULL,
+      "totalRewards" VARCHAR(26) NOT NULL,
+      "totalFeesCollected" VARCHAR(26) NOT NULL,
+      "totalSLyx" VARCHAR(26) NOT NULL,
+      "totalUnstaked" VARCHAR(26) NOT NULL,
+      "activatedValidators" INT NOT NULL,
+      "exitedValidators" INT NOT NULL,
+      "pendingValidators" INT NOT NULL,
+      "aprOnSLyx" VARCHAR(26) NOT NULL,
+      "aprOnActivated" VARCHAR(26) NOT NULL,
+      "lpSLyx" VARCHAR(26) NOT NULL,
+      "lpLyx" VARCHAR(26) NOT NULL,
+      "stakers" INT NOT NULL,
+      "totalValidators" INT NOT NULL
+    )
+  `);
+
   await client.end();
   // eslint-disable-next-line no-console
   console.log('monitoring seed script successfully executed');

@@ -110,7 +110,7 @@ export class AppService {
       this.ethersService.unstakeRequestCount(),
       this.ethersService.unstakeRequestCurrentIndex(),
       this.ethersService.unstakeProcessing(),
-      this.ethersService.totalSupply(),
+      this.ethersService.sLyxTotalSupply(),
     ]);
 
     return {
@@ -213,8 +213,6 @@ export class AppService {
     metrics += `liquidity_pool_contract_reserve_slyx ${liquidityPoolContractState.reserveSLyx}\n`;
     metrics += `stakers ${stakers}\n`;
 
-    // Add more metrics from rewardsContractState, slyxContractState, etc.
-
     return metrics;
   }
 
@@ -242,7 +240,7 @@ export class AppService {
     const FACTORING = 1_000_000;
     const FACTORING_BN = BigInt(FACTORING);
 
-    const sevenDaysInBlocks = 49_983;
+    const sevenDaysInBlocks = 48_774;
     const currentBlock: number = await this.ethersService.fetchCurrentBlockNumber();
     const rewardsUpdatedEvents = await this.ethersService.fetchRewardsUpdatedEvents(
       currentBlock - sevenDaysInBlocks,

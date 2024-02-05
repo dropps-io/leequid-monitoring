@@ -20,10 +20,12 @@ export const INDEXING_CONNECTION_STRING = getEnvOrThrow<string>('INDEXING_CONNEC
 export const PORT = getEnvOrThrow<number>('PORT', 3020);
 export const DEPLOY_ENV = getEnvOrThrow<string>('DEPLOY_ENV', 'dev');
 export const MONITORING_CRON = getConfigOrThrow<string>('cron_checks');
+export const CRON_PROTOCOL_CHECKPOINT = getConfigOrThrow<string>('cron_protocol_checkpoint');
 
 export const OPERATOR_LEEQUID_ADR = getEnvOrThrow<string>('OPERATOR_LEEQUID_ADR');
 export const OPERATOR_STAKELAB_ADR = getEnvOrThrow<string>('OPERATOR_STAKELAB_ADR');
 
+export const CONSENSUS_API_URL = getEnvOrThrow('CONSENSUS_API_URL');
 export const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';
 export const COINGECKO_LYX_ID = 'lukso-token-2';
 

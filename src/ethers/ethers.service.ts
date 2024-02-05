@@ -178,7 +178,7 @@ export class EthersService {
     return await this.stakedLyxToken.unstakeProcessing();
   }
 
-  public async totalSupply(): Promise<bigint> {
+  public async sLyxTotalSupply(): Promise<bigint> {
     return await this.stakedLyxToken.totalSupply();
   }
 

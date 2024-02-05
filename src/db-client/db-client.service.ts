@@ -3,7 +3,7 @@ import { Pool, QueryResult } from 'pg';
 import winston from 'winston';
 
 import { CONTRACT_SLYX, INDEXING_CONNECTION_STRING, POSTGRES_URI } from '../globals';
-import { DB_MONITORING_TABLE, LyxPriceTable, RewardsBalance } from './types';
+import { DB_MONITORING_TABLE, LyxPriceTable, ProtocolCheckpoint, RewardsBalance } from './types';
 import { LoggerService } from '../logger/logger.service';
 
 const TRANSFER_EVENT_NAME = 'Transfer';
@@ -164,6 +164,39 @@ export class DbClientService {
       `,
       [address],
     );
+  }
+
+  public async insertProtocolCheckpoint(data: ProtocolCheckpoint): Promise<void> {
+    const query = `
+    INSERT INTO ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT}
+      ("date", "blockNumber", "totalStaked", "totalRewards", "totalFeesCollected", "totalSLyx", "totalUnstaked", "activatedValidators", "exitedValidators", "pendingValidators", "aprOnSLyx", "aprOnActivated", "lpSLyx", "lpLyx", "stakers", "totalValidators")
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+  `;
+    const values = [
+      data.date,
+      data.blockNumber,
+      data.totalStaked,
+      data.totalRewards,
+      data.totalFeesCollected,
+      data.totalSLyx,
+      data.totalUnstaked,
+      data.activatedValidators,
+      data.exitedValidators,
+      data.pendingValidators,
+      data.aprOnSLyx,
+      data.aprOnActivated,
+      data.lpSLyx,
+      data.lpLyx,
+      data.stakers,
+      data.totalValidators,
+    ];
+
+    try {
+      await this.executeQueryMonitoring(query, values);
+    } catch (error) {
+      this.logger.error(`Error inserting protocol checkpoint: ${error.message}`);
+      throw error;
+    }
   }
 
   protected async executeQuery<T>(query: string, values?: any[]): Promise<T[]> {

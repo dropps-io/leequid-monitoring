@@ -3,8 +3,9 @@ import winston from 'winston';
 import { Cron } from '@nestjs/schedule';
 
 import { RewardsTrackingService } from '../rewards-tracking/rewards-tracking.service';
-import { MONITORING_CRON } from '../globals';
+import { CRON_PROTOCOL_CHECKPOINT, MONITORING_CRON } from '../globals';
 import { LoggerService } from '../logger/logger.service';
+import { ProtocolCheckpointService } from '../protocol-checkpoint/protocol-checkpoint.service';
 
 @Injectable()
 export class SchedulingService {
@@ -13,6 +14,7 @@ export class SchedulingService {
   constructor(
     protected readonly loggerService: LoggerService,
     protected readonly rewardsTrackingService: RewardsTrackingService,
+    protected readonly protocolCheckpointService: ProtocolCheckpointService,
   ) {
     // Initialize logger
     this.logger = loggerService.getChildLogger('SchedulingService');
@@ -22,5 +24,11 @@ export class SchedulingService {
   public async trackRewards(): Promise<void> {
     this.logger.info('Cron job running');
     await this.rewardsTrackingService.trackRewards();
+  }
+
+  @Cron(CRON_PROTOCOL_CHECKPOINT)
+  public async createProtocolCheckpoint(): Promise<void> {
+    this.logger.info('Protocol checkpoint cron job running');
+    await this.protocolCheckpointService.createProtocolCheckpoint();
   }
 }

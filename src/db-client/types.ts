@@ -10,6 +10,7 @@ export interface RewardsBalance {
   currentBalance: string;
   balanceChange: string;
   totalRewards: string;
+  balanceSLyx: string;
 }
 
 export interface LyxPriceTable {

@@ -119,11 +119,11 @@ export class DbClientService {
 
     // Build the placeholders array and values array.
     rows.forEach((row, index) => {
-      const baseIndex = index * 6;
+      const baseIndex = index * 7;
       placeholders.push(
         `($${baseIndex + 1}, $${baseIndex + 2}, $${baseIndex + 3}, $${baseIndex + 4}, $${
           baseIndex + 5
-        }, $${baseIndex + 6})`,
+        }, $${baseIndex + 6}, $${baseIndex + 7})`,
       );
       values.push(
         row.address,
@@ -132,12 +132,13 @@ export class DbClientService {
         row.currentBalance,
         row.balanceChange,
         row.totalRewards,
+        row.balanceSLyx,
       );
     });
 
     const query = `
     INSERT INTO ${DB_MONITORING_TABLE.REWARDS_BALANCE}
-      ("address", "blockNumber", "blockDate", "currentBalance", "balanceChange", "totalRewards")
+      ("address", "blockNumber", "blockDate", "currentBalance", "balanceChange", "totalRewards", "balanceSLyx")
     VALUES ${placeholders.join(', ')}
     ON CONFLICT ("address", "blockNumber") DO NOTHING;
   `;

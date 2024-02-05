@@ -45,9 +45,27 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
       "currentBalance" VARCHAR(26) NOT NULL,
       "balanceChange" VARCHAR(26) NOT NULL,
       "totalRewards" VARCHAR(26) NOT NULL,
+      "balanceSLyx" VARCHAR(26),
       UNIQUE ("address", "blockNumber")
     )
   `);
+
+  /* --- TO DELETE WHEN MIGRATION DONE --- */
+
+  // Check if the balanceSLyx column exists and add it if it doesn't
+  const columnExistsResult = await client.query(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name='${DB_MONITORING_TABLE.REWARDS_BALANCE}' 
+    AND column_name='balanceSLyx';
+  `);
+
+  if (columnExistsResult.rowCount === 0) {
+    await client.query(`
+      ALTER TABLE ${DB_MONITORING_TABLE.REWARDS_BALANCE} 
+      ADD COLUMN "balanceSLyx" VARCHAR(26);
+    `);
+  }
 
   // Create Validator table
   await client.query(`

@@ -83,6 +83,7 @@ export class RewardsTrackingService {
     previousRow?: RewardsBalance,
     merkleDis?: MerkleDistribution,
   ): Promise<RewardsBalance> {
+    const balanceSLyx = await this.ethersService.sLyxBalanceOf(address);
     let rewardsBalance = await this.ethersService.rewardsBalanceOf(address);
     if (merkleDis && merkleDis.values.length > 0 && BigInt(merkleDis.values[0]) > 0) {
       const isClaimed = await this.ethersService.isMerkleDistributionClaimed(merkleDis.index);
@@ -119,6 +120,7 @@ export class RewardsTrackingService {
         ? BigInt(previousRow.totalRewards) + rewardsBalanceChange
         : balanceWithCashouts
       ).toString(),
+      balanceSLyx: balanceSLyx.toString(),
     };
   }
 

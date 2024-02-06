@@ -8,6 +8,7 @@ import poolAbi from '../abi/Pool.json';
 import uniswapPair from '../abi/UniswapV2Pair.json';
 import merkleDistributorABI from '../abi/MerkleDistributor.json';
 import oraclesABI from '../abi/Oracles.json';
+import poolValidatorsABI from '../abi/PoolValidators.json';
 import {
   CONTRACT_REWARDS,
   RPC_URL,
@@ -16,8 +17,14 @@ import {
   LIQUIDITY_POOLS,
   CONTRACT_MERKLE_DISTRIBUTOR,
   CONTRACT_ORACLES,
+  CONTRACT_POOL_VALIDATORS,
 } from '../globals';
-import { MerkleRootUpdatedEvent, RewardsUpdatedEvent, RewardsVoteSubmitted } from './events';
+import {
+  MerkleRootUpdatedEvent,
+  OperatorAddedEvent,
+  RewardsUpdatedEvent,
+  RewardsVoteSubmitted,
+} from './events';
 import { CashoutEvent } from '../types/events';
 import { LoggerService } from '../logger/logger.service';
 import { DebugLogger } from '../decorators/debug-logging.decorator';
@@ -30,6 +37,7 @@ export class EthersService {
   private rewardsContract: Contract;
   private stakedLyxToken: Contract;
   private pool: Contract;
+  private poolValidators: Contract;
   private liquidityPair: Contract;
   private merkleDistributor: Contract;
   private oracles: Contract;
@@ -51,6 +59,7 @@ export class EthersService {
       this.provider,
     );
     this.oracles = new Contract(CONTRACT_ORACLES, oraclesABI, this.provider);
+    this.poolValidators = new Contract(CONTRACT_POOL_VALIDATORS, poolValidatorsABI, this.provider);
   }
 
   @DebugLogger()
@@ -225,5 +234,18 @@ export class EthersService {
       fromBlock,
       toBlock,
     )) as unknown as RewardsVoteSubmitted[];
+  }
+
+  /* ------- POOL VALIDATORS ------- */
+
+  @DebugLogger()
+  public async fetchOperatorAddedEvents(fromBlock = 0): Promise<OperatorAddedEvent[]> {
+    const operatorAddedEvents = (await this.poolValidators.queryFilter(
+      'OperatorAdded',
+      fromBlock,
+    )) as unknown as OperatorAddedEvent[];
+    if (operatorAddedEvents.length === 0) return [];
+    // Filtering the events to get the latest one
+    else return operatorAddedEvents.sort((a, b) => a.blockNumber - b.blockNumber);
   }
 }

@@ -105,6 +105,30 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
     )
   `);
 
+  // Create Operator table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.OPERATOR} (
+      "address" CHAR(42) PRIMARY KEY,
+      "merkleRoot" CHAR(66) NOT NULL
+    )
+  `);
+
+  // Create Validator table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.VALIDATOR} (
+      "publicKey" CHAR(98) PRIMARY KEY,
+      "operator" CHAR(42) NOT NULL REFERENCES ${DB_MONITORING_TABLE.OPERATOR}("address"),
+      "status" VARCHAR(64) NOT NULL
+    )
+  `);
+
+  // Create Checkpoint table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.CHECKPOINT} (
+      "validatorsCheckpointBlock" INT NOT NULL
+    )
+  `);
+
   await client.end();
   // eslint-disable-next-line no-console
   console.log('monitoring seed script successfully executed');

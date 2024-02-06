@@ -10,7 +10,6 @@ import { OperatorAddedEvent } from '../ethers/events';
 import { DepositDataProofDto } from '../dto/deposit-data.dto';
 import { VALIDATOR_STATUS } from '../types/enums';
 import { ClientApiService } from '../client-api/client-api.service';
-import { PreventOverlap } from '../decorators/prevent-overlap.decorator';
 import { ExceptionHandler } from '../decorators/exception-handler.decorator';
 
 @Injectable()
@@ -28,8 +27,27 @@ export class ValidatorsService {
   }
 
   @DebugLogger()
-  @PreventOverlap()
   @ExceptionHandler(false)
+  public async createOperatorsCheckpoint(): Promise<void> {
+    const currentBlock = await this.ethersService.fetchCurrentBlockNumber();
+    const operators = await this.dbService.getOperators();
+    const activeValidators = await this.dbService.countEffectiveValidatorsPerOperator();
+    const pendingValidators = await this.dbService.countPendingValidatorsPerOperator();
+    const exitedValidators = await this.dbService.countExitedValidatorsPerOperator();
+
+    for (const operator of operators) {
+      await this.dbService.insertOperatorCheckpoint(
+        currentBlock,
+        operator.address,
+        activeValidators.find((v) => v.operator === operator.address)?.count || 0,
+        pendingValidators.find((v) => v.operator === operator.address)?.count || 0,
+        exitedValidators.find((v) => v.operator === operator.address)?.count || 0,
+      );
+    }
+  }
+
+  @DebugLogger()
+  @ExceptionHandler(false, false)
   public async updateValidators(): Promise<void> {
     const syncingStatus = await this.clientAPI.fetchSyncingStatus();
     if (syncingStatus.is_syncing) throw new Error('Beacon node is not synced');
@@ -77,6 +95,7 @@ export class ValidatorsService {
     depositData: DepositDataProofDto[],
     operator: string,
   ): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     for (const [index, data] of depositData.entries()) {
       try {
         await this.dbService.insertValidator({
@@ -97,7 +116,11 @@ export class ValidatorsService {
   protected async fetchAndUpdateValidatorsStatus(slot: string): Promise<void> {
     const validators = await this.clientAPI.fetchActivatedValidatorsData(slot);
     for (const validator of validators) {
-      await this.dbService.updateValidator(validator.validator.pubkey, validator.status);
+      try {
+        await this.dbService.updateValidator(validator.validator.pubkey, validator.status);
+      } catch (e) {
+        this.logger.error(`Error updating validator ${validator.validator.pubkey}: ${e.message}`);
+      }
     }
   }
 

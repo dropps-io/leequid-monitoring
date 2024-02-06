@@ -87,7 +87,7 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT} (
       "blockNumber" INT NOT NULL PRIMARY KEY,
-      "date" TIMESTAMPTZ NOT NULL,
+      "date" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       "totalStaked" VARCHAR(26) NOT NULL,
       "totalRewards" VARCHAR(26) NOT NULL,
       "totalFeesCollected" VARCHAR(26) NOT NULL,
@@ -119,6 +119,18 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
       "publicKey" CHAR(98) PRIMARY KEY,
       "operator" CHAR(42) NOT NULL REFERENCES ${DB_MONITORING_TABLE.OPERATOR}("address"),
       "status" VARCHAR(64) NOT NULL
+    )
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.OPERATOR_CHECKPOINT} (
+      "blockNumber" INT NOT NULL,
+      "date" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "operator" CHAR(42) NOT NULL REFERENCES ${DB_MONITORING_TABLE.OPERATOR}("address"),
+      "activeValidators" INT NOT NULL,
+      "pendingValidators" INT NOT NULL,
+      "exitedValidators" INT NOT NULL,
+      UNIQUE ("blockNumber", "operator")
     )
   `);
 

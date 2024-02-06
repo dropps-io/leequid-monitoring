@@ -6,6 +6,7 @@ export enum DB_MONITORING_TABLE {
   REWARDS_BALANCE = 'rewards_balance',
   LYX_PRICE = 'lyx_price',
   PROTOCOL_CHECKPOINT = 'protocol_checkpoint',
+  OPERATOR_CHECKPOINT = 'operator_checkpoint',
   CHECKPOINT = 'checkpoint',
 }
 
@@ -36,6 +37,15 @@ export interface ProtocolCheckpoint {
   lpLyx: string;
   stakers: number;
   totalValidators: number;
+}
+
+export interface OperatorCheckpoint {
+  date: Date;
+  blockNumber: number;
+  operator: string;
+  activeValidators: number;
+  pendingValidators: number;
+  exitedValidators: number;
 }
 
 export interface ValidatorTable {

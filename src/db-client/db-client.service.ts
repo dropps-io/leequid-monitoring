@@ -7,6 +7,7 @@ import {
   CheckpointTable,
   DB_MONITORING_TABLE,
   LyxPriceTable,
+  OperatorCheckpoint,
   OperatorTable,
   ProtocolCheckpoint,
   RewardsBalance,
@@ -179,11 +180,10 @@ export class DbClientService {
   public async insertProtocolCheckpoint(data: ProtocolCheckpoint): Promise<void> {
     const query = `
     INSERT INTO ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT}
-      ("date", "blockNumber", "totalStaked", "totalRewards", "totalFeesCollected", "totalSLyx", "totalUnstaked", "activatedValidators", "exitedValidators", "pendingValidators", "aprOnSLyx", "aprOnActivated", "lpSLyx", "lpLyx", "stakers", "totalValidators")
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+      ("blockNumber", "totalStaked", "totalRewards", "totalFeesCollected", "totalSLyx", "totalUnstaked", "activatedValidators", "exitedValidators", "pendingValidators", "aprOnSLyx", "aprOnActivated", "lpSLyx", "lpLyx", "stakers", "totalValidators")
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
   `;
     const values = [
-      data.date,
       data.blockNumber,
       data.totalStaked,
       data.totalRewards,
@@ -275,6 +275,38 @@ export class DbClientService {
       SELECT operator, COUNT(*) FROM ${DB_MONITORING_TABLE.VALIDATOR}
       WHERE status = '${VALIDATOR_STATUS.ACTIVE_ONGOING}'
       OR status = '${VALIDATOR_STATUS.ACTIVE}'
+      OR status = '${VALIDATOR_STATUS.ACTIVE_EXITING}'
+      GROUP BY operator;
+      `,
+    );
+    return result.rows as { operator: string; count: number }[];
+  }
+
+  @DebugLogger()
+  public async countPendingValidatorsPerOperator(): Promise<{ operator: string; count: number }[]> {
+    const result = await this.monitoringClient.query(
+      `
+      SELECT operator, COUNT(*) FROM ${DB_MONITORING_TABLE.VALIDATOR}
+      WHERE status = '${VALIDATOR_STATUS.PENDING}'
+      OR status = '${VALIDATOR_STATUS.PENDING_INITIALIZED}'
+      OR status = '${VALIDATOR_STATUS.PENDING_QUEUED}'
+      GROUP BY operator;
+      `,
+    );
+    return result.rows as { operator: string; count: number }[];
+  }
+
+  @DebugLogger()
+  public async countExitedValidatorsPerOperator(): Promise<{ operator: string; count: number }[]> {
+    const result = await this.monitoringClient.query(
+      `
+      SELECT operator, COUNT(*) FROM ${DB_MONITORING_TABLE.VALIDATOR}
+      WHERE status = '${VALIDATOR_STATUS.EXITED}'
+      OR status = '${VALIDATOR_STATUS.EXITED_SLASHED}'
+      OR status = '${VALIDATOR_STATUS.EXITED_UNSLASHED}'
+      OR status = '${VALIDATOR_STATUS.WITHDRAWAL}'
+      OR status = '${VALIDATOR_STATUS.WITHDRAWAL_POSSIBLE}'
+      OR status = '${VALIDATOR_STATUS.WITHDRAWAL_DONE}'
       GROUP BY operator;
       `,
     );
@@ -309,6 +341,41 @@ export class DbClientService {
     );
   }
 
+  @DebugLogger()
+  public async insertOperatorCheckpoint(
+    blockNumber: number,
+    operator: string,
+    activeValidators: number,
+    pendingValidators: number,
+    exitedValidators: number,
+  ): Promise<void> {
+    await this.monitoringClient.query(
+      `INSERT INTO ${DB_MONITORING_TABLE.OPERATOR_CHECKPOINT}
+        ("blockNumber", operator, "activeValidators", "pendingValidators", "exitedValidators")
+      VALUES ($1, $2, $3, $4, $5)
+    `,
+      [blockNumber, operator, activeValidators, pendingValidators, exitedValidators],
+    );
+  }
+
+  @DebugLogger()
+  public async fetchLastOperatorCheckpointPerOperator(): Promise<OperatorCheckpoint[]> {
+    try {
+      const result = await this.monitoringClient.query(`
+      SELECT DISTINCT ON (operator) *
+      FROM ${DB_MONITORING_TABLE.OPERATOR_CHECKPOINT}
+      ORDER BY operator, "blockNumber" DESC;
+    `);
+      return result.rows as OperatorCheckpoint[];
+    } catch (error) {
+      this.logger.error(
+        `Error fetching the last operator checkpoint per operator: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  @DebugLogger()
   protected async executeQuery<T>(query: string, values?: any[]): Promise<T[]> {
     try {
       const result = await this.indexingClient.query(query, values);

@@ -7,11 +7,6 @@ import { DebugLogger } from '../decorators/debug-logging.decorator';
 import { ValidatorResponse } from '../types/validator-response';
 import { BEACON_API_URL, WITHDRAWAL_CREDENTIALS } from '../globals';
 
-interface WithdrawalItem {
-  address: string;
-  amount: string;
-}
-
 /**
  * Service to interact with the Consensus API
  */

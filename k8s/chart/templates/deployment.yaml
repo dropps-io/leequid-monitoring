@@ -37,7 +37,7 @@ spec:
               value: {{ .Values.CONTRACT_SLYX }}
             - name: CONTRACT_POOL
               value: {{ .Values.CONTRACT_POOL }}
-            - name: CONTRACT_POOL
+            - name: CONTRACT_POOL_VALIDATORS
               value: {{ .Values.CONTRACT_POOL_VALIDATORS }}
             - name: LIQUIDITY_POOLS
               value: {{ .Values.LIQUIDITY_POOLS }}

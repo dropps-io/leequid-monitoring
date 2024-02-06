@@ -35,10 +35,10 @@ spec:
               value: {{ .Values.CONTRACT_REWARDS }}
             - name: CONTRACT_SLYX
               value: {{ .Values.CONTRACT_SLYX }}
-            - name: CONTRACT_POOL
-              value: {{ .Values.CONTRACT_POOL }}
             - name: CONTRACT_POOL_VALIDATORS
               value: {{ .Values.CONTRACT_POOL_VALIDATORS }}
+            - name: CONTRACT_POOL
+              value: {{ .Values.CONTRACT_POOL }}
             - name: LIQUIDITY_POOLS
               value: {{ .Values.LIQUIDITY_POOLS }}
             - name: CONTRACT_ORACLES

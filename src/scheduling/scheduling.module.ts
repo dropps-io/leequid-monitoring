@@ -4,9 +4,17 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { SchedulingService } from './scheduling.service';
 import { RewardsTrackingModule } from '../rewards-tracking/rewards-tracking.module';
 import { LoggerModule } from '../logger/logger.module';
+import { ValidatorsModule } from '../validators/validators.module';
+import { ProtocolCheckpointModule } from '../protocol-checkpoint/protocol-checkpoint.module';
 
 @Module({
-  imports: [LoggerModule, ScheduleModule.forRoot(), RewardsTrackingModule],
+  imports: [
+    LoggerModule,
+    ScheduleModule.forRoot(),
+    RewardsTrackingModule,
+    ProtocolCheckpointModule,
+    ValidatorsModule,
+  ],
   providers: [SchedulingService],
   exports: [SchedulingService],
 })

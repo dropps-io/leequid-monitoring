@@ -35,6 +35,24 @@ export class AppController {
     }
   }
 
+  @Get('/operators') async operators(): Promise<
+    {
+      address: string;
+      activatedValidators: number;
+      exitedValidators: number;
+      pendingValidators: number;
+    }[]
+  > {
+    try {
+      return await this.monitoringService.fetchOperatorsState();
+    } catch (error) {
+      this.logger.error(`Error while getting operators state: ${error.message}`, {
+        stack: error.stack,
+      });
+      throwHTTPError('Internal Error', 500);
+    }
+  }
+
   @Get('/metrics')
   async metrics(@Res() res: Response): Promise<void> {
     try {

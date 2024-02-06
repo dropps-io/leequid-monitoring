@@ -84,6 +84,63 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
     )
   `);
 
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT} (
+      "blockNumber" INT NOT NULL PRIMARY KEY,
+      "date" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "totalStaked" VARCHAR(26) NOT NULL,
+      "totalRewards" VARCHAR(26) NOT NULL,
+      "totalFeesCollected" VARCHAR(26) NOT NULL,
+      "totalSLyx" VARCHAR(26) NOT NULL,
+      "totalUnstaked" VARCHAR(26) NOT NULL,
+      "activatedValidators" INT NOT NULL,
+      "exitedValidators" INT NOT NULL,
+      "pendingValidators" INT NOT NULL,
+      "aprOnSLyx" VARCHAR(26) NOT NULL,
+      "aprOnActivated" VARCHAR(26) NOT NULL,
+      "lpSLyx" VARCHAR(26) NOT NULL,
+      "lpLyx" VARCHAR(26) NOT NULL,
+      "stakers" INT NOT NULL,
+      "totalValidators" INT NOT NULL
+    )
+  `);
+
+  // Create Operator table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.OPERATOR} (
+      "address" CHAR(42) PRIMARY KEY,
+      "merkleRoot" CHAR(66) NOT NULL
+    )
+  `);
+
+  // Create Validator table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.VALIDATOR} (
+      "publicKey" CHAR(98) PRIMARY KEY,
+      "operator" CHAR(42) NOT NULL REFERENCES ${DB_MONITORING_TABLE.OPERATOR}("address"),
+      "status" VARCHAR(64) NOT NULL
+    )
+  `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.OPERATOR_CHECKPOINT} (
+      "blockNumber" INT NOT NULL,
+      "date" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "operator" CHAR(42) NOT NULL REFERENCES ${DB_MONITORING_TABLE.OPERATOR}("address"),
+      "activeValidators" INT NOT NULL,
+      "pendingValidators" INT NOT NULL,
+      "exitedValidators" INT NOT NULL,
+      UNIQUE ("blockNumber", "operator")
+    )
+  `);
+
+  // Create Checkpoint table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.CHECKPOINT} (
+      "validatorsCheckpointBlock" INT NOT NULL
+    )
+  `);
+
   await client.end();
   // eslint-disable-next-line no-console
   console.log('monitoring seed script successfully executed');

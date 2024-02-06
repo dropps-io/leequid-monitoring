@@ -25,6 +25,14 @@ export interface RewardsVoteSubmitted extends AnyEvent {
   };
 }
 
+export interface OperatorAddedEvent extends AnyEvent {
+  args: {
+    operator: string;
+    depositDataMerkleRoot: string;
+    depositDataMerkleProofs: string; // IPFS link containing the merkle proofs and allocations
+  };
+}
+
 export interface AnyEvent {
   event: string;
   blockNumber: number;

@@ -3,8 +3,19 @@ import { Pool, QueryResult } from 'pg';
 import winston from 'winston';
 
 import { CONTRACT_SLYX, INDEXING_CONNECTION_STRING, POSTGRES_URI } from '../globals';
-import { DB_MONITORING_TABLE, LyxPriceTable, RewardsBalance } from './types';
+import {
+  CheckpointTable,
+  DB_MONITORING_TABLE,
+  LyxPriceTable,
+  OperatorCheckpoint,
+  OperatorTable,
+  ProtocolCheckpoint,
+  RewardsBalance,
+  ValidatorTable,
+} from './types';
 import { LoggerService } from '../logger/logger.service';
+import { DebugLogger } from '../decorators/debug-logging.decorator';
+import { VALIDATOR_STATUS } from '../types/enums';
 
 const TRANSFER_EVENT_NAME = 'Transfer';
 
@@ -166,6 +177,205 @@ export class DbClientService {
     );
   }
 
+  public async insertProtocolCheckpoint(data: ProtocolCheckpoint): Promise<void> {
+    const query = `
+    INSERT INTO ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT}
+      ("blockNumber", "totalStaked", "totalRewards", "totalFeesCollected", "totalSLyx", "totalUnstaked", "activatedValidators", "exitedValidators", "pendingValidators", "aprOnSLyx", "aprOnActivated", "lpSLyx", "lpLyx", "stakers", "totalValidators")
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
+  `;
+    const values = [
+      data.blockNumber,
+      data.totalStaked,
+      data.totalRewards,
+      data.totalFeesCollected,
+      data.totalSLyx,
+      data.totalUnstaked,
+      data.activatedValidators,
+      data.exitedValidators,
+      data.pendingValidators,
+      data.aprOnSLyx,
+      data.aprOnActivated,
+      data.lpSLyx,
+      data.lpLyx,
+      data.stakers,
+      data.totalValidators,
+    ];
+
+    try {
+      await this.executeQueryMonitoring(query, values);
+    } catch (error) {
+      this.logger.error(`Error inserting protocol checkpoint: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @DebugLogger()
+  public async insertOperator(address: string, merkleRoot: string): Promise<void> {
+    await this.monitoringClient.query(
+      `INSERT INTO ${DB_MONITORING_TABLE.OPERATOR} (address, "merkleRoot") VALUES ($1, $2)`,
+      [address, merkleRoot],
+    );
+  }
+
+  @DebugLogger()
+  public async getOperator(address: string): Promise<OperatorTable | null> {
+    const result = await this.monitoringClient.query(
+      `SELECT * FROM ${DB_MONITORING_TABLE.OPERATOR} WHERE address = $1`,
+      [address],
+    );
+    if (result.rowCount === 0) return null;
+    return result.rows[0] as OperatorTable;
+  }
+
+  @DebugLogger()
+  public async getOperators(): Promise<OperatorTable[]> {
+    const res = await this.monitoringClient.query(`SELECT * FROM ${DB_MONITORING_TABLE.OPERATOR}`);
+    return res.rows as OperatorTable[];
+  }
+
+  @DebugLogger()
+  public async updateOperator(address: string, merkleRoot: string): Promise<void> {
+    await this.monitoringClient.query(
+      `UPDATE ${DB_MONITORING_TABLE.OPERATOR} SET "merkleRoot" = $1 WHERE address = $2`,
+      [merkleRoot, address],
+    );
+  }
+
+  public async insertValidator(validator: ValidatorTable): Promise<void> {
+    await this.monitoringClient.query(
+      `INSERT INTO ${DB_MONITORING_TABLE.VALIDATOR} ("publicKey", operator, status) 
+        VALUES ($1, $2, $3)`,
+      [validator.publicKey, validator.operator, validator.status],
+    );
+  }
+
+  @DebugLogger()
+  public async getValidator(publicKey: string): Promise<ValidatorTable | null> {
+    const result = await this.monitoringClient.query(
+      `SELECT * FROM ${DB_MONITORING_TABLE.VALIDATOR} WHERE "publicKey" = $1`,
+      [publicKey],
+    );
+    if (result.rowCount === 0) return null;
+    return result.rows[0] as ValidatorTable;
+  }
+
+  public async updateValidator(publicKey: string, status: VALIDATOR_STATUS): Promise<void> {
+    await this.monitoringClient.query(
+      `UPDATE ${DB_MONITORING_TABLE.VALIDATOR} SET status = $1 WHERE "publicKey" = $2`,
+      [status, publicKey],
+    );
+  }
+
+  @DebugLogger()
+  public async countEffectiveValidatorsPerOperator(): Promise<
+    { operator: string; count: number }[]
+  > {
+    const result = await this.monitoringClient.query(
+      `
+      SELECT operator, COUNT(*) FROM ${DB_MONITORING_TABLE.VALIDATOR}
+      WHERE status = '${VALIDATOR_STATUS.ACTIVE_ONGOING}'
+      OR status = '${VALIDATOR_STATUS.ACTIVE}'
+      OR status = '${VALIDATOR_STATUS.ACTIVE_EXITING}'
+      GROUP BY operator;
+      `,
+    );
+    return result.rows as { operator: string; count: number }[];
+  }
+
+  @DebugLogger()
+  public async countPendingValidatorsPerOperator(): Promise<{ operator: string; count: number }[]> {
+    const result = await this.monitoringClient.query(
+      `
+      SELECT operator, COUNT(*) FROM ${DB_MONITORING_TABLE.VALIDATOR}
+      WHERE status = '${VALIDATOR_STATUS.PENDING}'
+      OR status = '${VALIDATOR_STATUS.PENDING_INITIALIZED}'
+      OR status = '${VALIDATOR_STATUS.PENDING_QUEUED}'
+      GROUP BY operator;
+      `,
+    );
+    return result.rows as { operator: string; count: number }[];
+  }
+
+  @DebugLogger()
+  public async countExitedValidatorsPerOperator(): Promise<{ operator: string; count: number }[]> {
+    const result = await this.monitoringClient.query(
+      `
+      SELECT operator, COUNT(*) FROM ${DB_MONITORING_TABLE.VALIDATOR}
+      WHERE status = '${VALIDATOR_STATUS.EXITED}'
+      OR status = '${VALIDATOR_STATUS.EXITED_SLASHED}'
+      OR status = '${VALIDATOR_STATUS.EXITED_UNSLASHED}'
+      OR status = '${VALIDATOR_STATUS.WITHDRAWAL}'
+      OR status = '${VALIDATOR_STATUS.WITHDRAWAL_POSSIBLE}'
+      OR status = '${VALIDATOR_STATUS.WITHDRAWAL_DONE}'
+      GROUP BY operator;
+      `,
+    );
+    return result.rows as { operator: string; count: number }[];
+  }
+
+  @DebugLogger()
+  public async insertCheckpoint(validatorsCheckpointBlock: number): Promise<void> {
+    await this.monitoringClient.query(
+      `INSERT INTO ${DB_MONITORING_TABLE.CHECKPOINT} ("validatorsCheckpointBlock") VALUES ($1)`,
+      [validatorsCheckpointBlock],
+    );
+  }
+
+  @DebugLogger()
+  public async getCheckpoint(): Promise<CheckpointTable> {
+    const result = await this.monitoringClient.query(
+      `SELECT * FROM ${DB_MONITORING_TABLE.CHECKPOINT}`,
+    );
+    if (result.rowCount && result.rowCount > 0) return result.rows[0];
+    await this.insertCheckpoint(0);
+    return {
+      validatorsCheckpointBlock: 0,
+    };
+  }
+
+  @DebugLogger()
+  public async updateValidatorsCheckpoint(validatorsCheckpointBlock: number): Promise<void> {
+    await this.monitoringClient.query(
+      `UPDATE ${DB_MONITORING_TABLE.CHECKPOINT} SET "validatorsCheckpointBlock" = $1`,
+      [validatorsCheckpointBlock],
+    );
+  }
+
+  @DebugLogger()
+  public async insertOperatorCheckpoint(
+    blockNumber: number,
+    operator: string,
+    activeValidators: number,
+    pendingValidators: number,
+    exitedValidators: number,
+  ): Promise<void> {
+    await this.monitoringClient.query(
+      `INSERT INTO ${DB_MONITORING_TABLE.OPERATOR_CHECKPOINT}
+        ("blockNumber", operator, "activeValidators", "pendingValidators", "exitedValidators")
+      VALUES ($1, $2, $3, $4, $5)
+    `,
+      [blockNumber, operator, activeValidators, pendingValidators, exitedValidators],
+    );
+  }
+
+  @DebugLogger()
+  public async fetchLastOperatorCheckpointPerOperator(): Promise<OperatorCheckpoint[]> {
+    try {
+      const result = await this.monitoringClient.query(`
+      SELECT DISTINCT ON (operator) *
+      FROM ${DB_MONITORING_TABLE.OPERATOR_CHECKPOINT}
+      ORDER BY operator, "blockNumber" DESC;
+    `);
+      return result.rows as OperatorCheckpoint[];
+    } catch (error) {
+      this.logger.error(
+        `Error fetching the last operator checkpoint per operator: ${error.message}`,
+      );
+      throw error;
+    }
+  }
+
+  @DebugLogger()
   protected async executeQuery<T>(query: string, values?: any[]): Promise<T[]> {
     try {
       const result = await this.indexingClient.query(query, values);

@@ -110,7 +110,7 @@ export class AppService {
       this.ethersService.unstakeRequestCount(),
       this.ethersService.unstakeRequestCurrentIndex(),
       this.ethersService.unstakeProcessing(),
-      this.ethersService.totalSupply(),
+      this.ethersService.sLyxTotalSupply(),
     ]);
 
     return {
@@ -173,12 +173,18 @@ export class AppService {
       poolContractState,
       liquidityPoolContractState,
       stakers,
+      activeValidators,
+      pendingValidators,
+      exitedValidators,
     ] = await Promise.all([
       this.fetchRewardsContractState(),
       this.fetchSLyxContractState(),
       this.fetchPoolContractState(),
       this.fetchLiquidityPoolContractState(),
       this.dbClient.fetchNumberOfStakers(),
+      this.dbClient.countEffectiveValidatorsPerOperator(),
+      this.dbClient.countPendingValidatorsPerOperator(),
+      this.dbClient.countExitedValidatorsPerOperator(),
     ]);
 
     // Convert the data to Prometheus format
@@ -212,8 +218,15 @@ export class AppService {
     metrics += `liquidity_pool_contract_reserve_lyx ${liquidityPoolContractState.reserveLyx}\n`;
     metrics += `liquidity_pool_contract_reserve_slyx ${liquidityPoolContractState.reserveSLyx}\n`;
     metrics += `stakers ${stakers}\n`;
-
-    // Add more metrics from rewardsContractState, slyxContractState, etc.
+    for (const operator of activeValidators) {
+      metrics += `active_validators{operator="${operator.operator}"} ${operator.count}\n`;
+    }
+    for (const operator of pendingValidators) {
+      metrics += `pending_validators{operator="${operator.operator}"} ${operator.count}\n`;
+    }
+    for (const operator of exitedValidators) {
+      metrics += `exited_validators{operator="${operator.operator}"} ${operator.count}\n`;
+    }
 
     return metrics;
   }
@@ -238,11 +251,30 @@ export class AppService {
     });
   }
 
+  public async fetchOperatorsState(): Promise<
+    {
+      address: string;
+      activatedValidators: number;
+      pendingValidators: number;
+      exitedValidators: number;
+    }[]
+  > {
+    const response = await this.dbClient.fetchLastOperatorCheckpointPerOperator();
+    return response.map((row) => {
+      return {
+        address: row.operator,
+        activatedValidators: row.activeValidators,
+        pendingValidators: row.pendingValidators,
+        exitedValidators: row.exitedValidators,
+      };
+    });
+  }
+
   protected async getSevenDaysAPR(): Promise<number> {
     const FACTORING = 1_000_000;
     const FACTORING_BN = BigInt(FACTORING);
 
-    const sevenDaysInBlocks = 49_983;
+    const sevenDaysInBlocks = 48_774;
     const currentBlock: number = await this.ethersService.fetchCurrentBlockNumber();
     const rewardsUpdatedEvents = await this.ethersService.fetchRewardsUpdatedEvents(
       currentBlock - sevenDaysInBlocks,

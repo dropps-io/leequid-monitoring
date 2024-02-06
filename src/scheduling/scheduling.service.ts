@@ -6,6 +6,8 @@ import { RewardsTrackingService } from '../rewards-tracking/rewards-tracking.ser
 import { CRON_PROTOCOL_CHECKPOINT, MONITORING_CRON } from '../globals';
 import { LoggerService } from '../logger/logger.service';
 import { ProtocolCheckpointService } from '../protocol-checkpoint/protocol-checkpoint.service';
+import { ValidatorsService } from '../validators/validators.service';
+import { PreventOverlap } from '../decorators/prevent-overlap.decorator';
 
 @Injectable()
 export class SchedulingService {
@@ -15,6 +17,7 @@ export class SchedulingService {
     protected readonly loggerService: LoggerService,
     protected readonly rewardsTrackingService: RewardsTrackingService,
     protected readonly protocolCheckpointService: ProtocolCheckpointService,
+    protected readonly validatorsService: ValidatorsService,
   ) {
     // Initialize logger
     this.logger = loggerService.getChildLogger('SchedulingService');
@@ -27,8 +30,11 @@ export class SchedulingService {
   }
 
   @Cron(CRON_PROTOCOL_CHECKPOINT)
+  @PreventOverlap()
   public async createProtocolCheckpoint(): Promise<void> {
     this.logger.info('Protocol checkpoint cron job running');
     await this.protocolCheckpointService.createProtocolCheckpoint();
+    await this.validatorsService.updateValidators();
+    await this.validatorsService.createOperatorsCheckpoint();
   }
 }

@@ -303,4 +303,23 @@ export class AppService {
       100
     );
   }
+
+  public async getLyxPrice(
+    currency: SUPPORTED_CURRENCY,
+    fromBlock?: number,
+  ): Promise<{
+    currency: SUPPORTED_CURRENCY;
+    price: { value: number; blockNumber: number }[];
+  }> {
+    const response = await this.dbClient.fetchLyxPrices(fromBlock, fromBlock ? undefined : 1);
+    return {
+      currency: SUPPORTED_CURRENCY.USD,
+      price: response.map((row) => {
+        return {
+          value: row[currency],
+          blockNumber: row.blockNumber,
+        };
+      }),
+    };
+  }
 }

@@ -86,4 +86,23 @@ export class AppController {
       throwHTTPError('Internal Error', 500);
     }
   }
+
+  @Get('/lyx-price')
+  async lyxPrice(
+    @Query() query: { currency?: SUPPORTED_CURRENCY; fromBlock?: number },
+    @Res() res: Response,
+  ): Promise<void> {
+    try {
+      const prices = await this.monitoringService.getLyxPrice(
+        query.currency || SUPPORTED_CURRENCY.USD,
+        query.fromBlock,
+      );
+      res.send(prices);
+    } catch (error) {
+      this.logger.error(`Error while getting LYX price: ${error.message}`, {
+        stack: error.stack,
+      });
+      throwHTTPError('Internal Error', 500);
+    }
+  }
 }

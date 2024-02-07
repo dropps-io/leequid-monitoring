@@ -162,10 +162,16 @@ export class DbClientService {
     }
   }
 
-  public async fetchLyxPrices(): Promise<LyxPriceTable[]> {
-    return await this.executeQueryMonitoring<LyxPriceTable>(`
-      SELECT * FROM ${DB_MONITORING_TABLE.LYX_PRICE}
-    `);
+  public async fetchLyxPrices(fromBlock?: number, limit?: number): Promise<LyxPriceTable[]> {
+    return await this.executeQueryMonitoring<LyxPriceTable>(
+      `
+      SELECT * FROM ${DB_MONITORING_TABLE.LYX_PRICE} ${
+        fromBlock ? `WHERE "blockNumber" >= $1` : ''
+      } 
+      ORDER BY "blockNumber" DESC ${limit ? `LIMIT ${limit}` : ''};
+    `,
+      fromBlock ? [fromBlock] : [],
+    );
   }
 
   public async fetchRewardsBalances(address: string): Promise<RewardsBalance[]> {

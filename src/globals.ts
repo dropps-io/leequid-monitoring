@@ -15,6 +15,8 @@ export const CONTRACT_MERKLE_DISTRIBUTOR = getEnvOrThrow<string>('CONTRACT_MERKL
 export const WITHDRAWAL_CREDENTIALS =
   '0x010000000000000000000000' + CONTRACT_REWARDS.slice(2).toLowerCase();
 
+export const P_LIMIT = getConfigOrThrow<number>('p_limit');
+
 export const INDEXING_CONNECTION_STRING = getEnvOrThrow<string>('INDEXING_CONNECTION_STRING');
 
 export const PORT = getEnvOrThrow<number>('PORT', 3020);

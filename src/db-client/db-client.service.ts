@@ -273,6 +273,30 @@ export class DbClientService {
   }
 
   @DebugLogger()
+  public async fetchNonExitedValidatorIds(): Promise<string[]> {
+    const query = `
+    SELECT "publicKey" FROM ${DB_MONITORING_TABLE.VALIDATOR}
+    WHERE status NOT IN ($1, $2, $3, $4, $5, $6)
+  `;
+    const values = [
+      VALIDATOR_STATUS.EXITED,
+      VALIDATOR_STATUS.EXITED_SLASHED,
+      VALIDATOR_STATUS.EXITED_UNSLASHED,
+      VALIDATOR_STATUS.WITHDRAWAL,
+      VALIDATOR_STATUS.WITHDRAWAL_POSSIBLE,
+      VALIDATOR_STATUS.WITHDRAWAL_DONE,
+    ];
+
+    try {
+      const result = await this.monitoringClient.query(query, values);
+      return result.rows.map((row) => row.publicKey);
+    } catch (error) {
+      this.logger.error(`Error fetching active validator IDs: ${error.message}`);
+      throw error;
+    }
+  }
+
+  @DebugLogger()
   public async countEffectiveValidatorsPerOperator(): Promise<
     { operator: string; count: number }[]
   > {

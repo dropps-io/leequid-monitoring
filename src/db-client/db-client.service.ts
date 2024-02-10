@@ -162,15 +162,25 @@ export class DbClientService {
     }
   }
 
-  public async fetchLyxPrices(fromBlock?: number, limit?: number): Promise<LyxPriceTable[]> {
+  public async fetchLyxPrices(
+    fromBlock?: number,
+    fromTimestamp?: number,
+    limit?: number,
+  ): Promise<LyxPriceTable[]> {
     return await this.executeQueryMonitoring<LyxPriceTable>(
       `
-      SELECT * FROM ${DB_MONITORING_TABLE.LYX_PRICE} ${
-        fromBlock ? `WHERE "blockNumber" >= $1` : ''
-      } 
-      ORDER BY "blockNumber" DESC ${limit ? `LIMIT ${limit}` : ''};
+      SELECT * FROM ${DB_MONITORING_TABLE.LYX_PRICE} 
+      ${
+        fromBlock
+          ? 'WHERE "blockNumber" >= $1'
+          : fromTimestamp
+          ? 'WHERE "date" >= to_timestamp($1)'
+          : ''
+      }
+      ORDER BY "blockNumber" DESC 
+      ${limit ? `LIMIT ${limit}` : ''};
     `,
-      fromBlock ? [fromBlock] : [],
+      fromBlock ? [fromBlock] : fromTimestamp ? [fromTimestamp] : [],
     );
   }
 

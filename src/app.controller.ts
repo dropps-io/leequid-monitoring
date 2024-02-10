@@ -89,13 +89,14 @@ export class AppController {
 
   @Get('/lyx-price')
   async lyxPrice(
-    @Query() query: { currency?: SUPPORTED_CURRENCY; fromBlock?: number },
+    @Query() query: { currency?: SUPPORTED_CURRENCY; fromBlock?: number; fromTimestamp?: number },
     @Res() res: Response,
   ): Promise<void> {
     try {
       const prices = await this.monitoringService.getLyxPrice(
         query.currency || SUPPORTED_CURRENCY.USD,
         query.fromBlock,
+        query.fromTimestamp,
       );
       res.send(prices);
     } catch (error) {

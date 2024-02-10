@@ -61,6 +61,7 @@ export interface OperatorTable {
 
 export interface LyxPriceTable {
   blockNumber: number;
+  date: Date;
   usd: number;
   eur: number;
   jpy: number;

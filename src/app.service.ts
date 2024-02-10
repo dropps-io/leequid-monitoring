@@ -307,17 +307,23 @@ export class AppService {
   public async getLyxPrice(
     currency: SUPPORTED_CURRENCY,
     fromBlock?: number,
+    fromTimestamp?: number,
   ): Promise<{
     currency: SUPPORTED_CURRENCY;
-    price: { value: number; blockNumber: number }[];
+    price: { value: number; blockNumber: number; date: Date }[];
   }> {
-    const response = await this.dbClient.fetchLyxPrices(fromBlock, fromBlock ? undefined : 1);
+    const response = await this.dbClient.fetchLyxPrices(
+      fromBlock,
+      fromTimestamp,
+      fromBlock || fromTimestamp ? undefined : 1,
+    );
     return {
-      currency: SUPPORTED_CURRENCY.USD,
+      currency,
       price: response.map((row) => {
         return {
           value: row[currency],
           blockNumber: row.blockNumber,
+          date: row.date,
         };
       }),
     };

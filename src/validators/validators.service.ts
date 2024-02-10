@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import winston from 'winston';
+import pLimit from 'p-limit';
 
 import { EthersService } from '../ethers/ethers.service';
 import { LoggerService } from '../logger/logger.service';
@@ -11,6 +12,9 @@ import { DepositDataProofDto } from '../dto/deposit-data.dto';
 import { VALIDATOR_STATUS } from '../types/enums';
 import { ClientApiService } from '../client-api/client-api.service';
 import { ExceptionHandler } from '../decorators/exception-handler.decorator';
+import { P_LIMIT } from '../globals';
+
+const limit = pLimit(P_LIMIT);
 
 @Injectable()
 export class ValidatorsService {
@@ -114,13 +118,21 @@ export class ValidatorsService {
 
   @DebugLogger()
   protected async fetchAndUpdateValidatorsStatus(slot: string): Promise<void> {
-    const validators = await this.clientAPI.fetchActivatedValidatorsData(slot);
-    for (const validator of validators) {
-      try {
-        await this.dbService.updateValidator(validator.validator.pubkey, validator.status);
-      } catch (e) {
-        this.logger.error(`Error updating validator ${validator.validator.pubkey}: ${e.message}`);
-      }
+    const nonExitedValidators = await this.dbService.fetchNonExitedValidatorIds();
+    this.logger.info(`Updating ${nonExitedValidators.length} validators`);
+    const promises = nonExitedValidators.map((validator) =>
+      limit(() => this.fetchAndUpdateValidator(slot, validator)),
+    );
+
+    await Promise.all(promises);
+  }
+
+  protected async fetchAndUpdateValidator(slot: string, validator: string): Promise<void> {
+    try {
+      const validatorData = await this.clientAPI.fetchValidatorData(slot, validator);
+      await this.dbService.updateValidator(validator, validatorData.status);
+    } catch (e) {
+      this.logger.error(`Error updating validator ${validator}: ${e.message}`);
     }
   }
 

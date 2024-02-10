@@ -162,15 +162,25 @@ export class DbClientService {
     }
   }
 
-  public async fetchLyxPrices(fromBlock?: number, limit?: number): Promise<LyxPriceTable[]> {
+  public async fetchLyxPrices(
+    fromBlock?: number,
+    fromTimestamp?: number,
+    limit?: number,
+  ): Promise<LyxPriceTable[]> {
     return await this.executeQueryMonitoring<LyxPriceTable>(
       `
-      SELECT * FROM ${DB_MONITORING_TABLE.LYX_PRICE} ${
-        fromBlock ? `WHERE "blockNumber" >= $1` : ''
-      } 
-      ORDER BY "blockNumber" DESC ${limit ? `LIMIT ${limit}` : ''};
+      SELECT * FROM ${DB_MONITORING_TABLE.LYX_PRICE} 
+      ${
+        fromBlock
+          ? 'WHERE "blockNumber" >= $1'
+          : fromTimestamp
+          ? 'WHERE "date" >= to_timestamp($1)'
+          : ''
+      }
+      ORDER BY "blockNumber" DESC 
+      ${limit ? `LIMIT ${limit}` : ''};
     `,
-      fromBlock ? [fromBlock] : [],
+      fromBlock ? [fromBlock] : fromTimestamp ? [fromTimestamp] : [],
     );
   }
 
@@ -270,6 +280,30 @@ export class DbClientService {
       `UPDATE ${DB_MONITORING_TABLE.VALIDATOR} SET status = $1 WHERE "publicKey" = $2`,
       [status, publicKey],
     );
+  }
+
+  @DebugLogger()
+  public async fetchNonExitedValidatorIds(): Promise<string[]> {
+    const query = `
+    SELECT "publicKey" FROM ${DB_MONITORING_TABLE.VALIDATOR}
+    WHERE status NOT IN ($1, $2, $3, $4, $5, $6)
+  `;
+    const values = [
+      VALIDATOR_STATUS.EXITED,
+      VALIDATOR_STATUS.EXITED_SLASHED,
+      VALIDATOR_STATUS.EXITED_UNSLASHED,
+      VALIDATOR_STATUS.WITHDRAWAL,
+      VALIDATOR_STATUS.WITHDRAWAL_POSSIBLE,
+      VALIDATOR_STATUS.WITHDRAWAL_DONE,
+    ];
+
+    try {
+      const result = await this.monitoringClient.query(query, values);
+      return result.rows.map((row) => row.publicKey);
+    } catch (error) {
+      this.logger.error(`Error fetching active validator IDs: ${error.message}`);
+      throw error;
+    }
   }
 
   @DebugLogger()

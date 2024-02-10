@@ -4,6 +4,7 @@ import pg from 'pg';
 
 import { POSTGRES_URI } from '../globals';
 import { DB_MONITORING_TABLE } from './types';
+import { fillHistoricalLyxPrice } from './tmp/fill-historical-lyx-price';
 
 if (process.env.NODE_ENV === 'test') config({ path: path.resolve(process.cwd(), '.env.test') });
 
@@ -50,27 +51,11 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
     )
   `);
 
-  /* --- TO DELETE WHEN MIGRATION DONE --- */
-
-  // Check if the balanceSLyx column exists and add it if it doesn't
-  const columnExistsResult = await client.query(`
-    SELECT column_name 
-    FROM information_schema.columns 
-    WHERE table_name='${DB_MONITORING_TABLE.REWARDS_BALANCE}' 
-    AND column_name='balanceSLyx';
-  `);
-
-  if (columnExistsResult.rowCount === 0) {
-    await client.query(`
-      ALTER TABLE ${DB_MONITORING_TABLE.REWARDS_BALANCE} 
-      ADD COLUMN "balanceSLyx" VARCHAR(26);
-    `);
-  }
-
   // Create Validator table
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.LYX_PRICE} (
       "blockNumber" INT NOT NULL PRIMARY KEY,
+      "date" TIMESTAMPTZ NOT NULL,
       "usd" NUMERIC NOT NULL,
       "eur" NUMERIC NOT NULL,
       "jpy" NUMERIC NOT NULL,
@@ -83,6 +68,33 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
       "inr" NUMERIC NOT NULL
     )
   `);
+
+  // TO DELETE WHEN MIGRATION DONE
+
+  const columnExistsResult = await client.query(`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name='${DB_MONITORING_TABLE.LYX_PRICE}' 
+    AND column_name='date';
+  `);
+
+  if (columnExistsResult.rowCount === 0) {
+    await client.query(`
+    ALTER TABLE ${DB_MONITORING_TABLE.LYX_PRICE}
+    ADD COLUMN "date" TIMESTAMPTZ;
+  `);
+  }
+
+  await fillHistoricalLyxPrice(client);
+
+  // Apply patch to add missing columns
+
+  await client.query(`
+    ALTER TABLE ${DB_MONITORING_TABLE.LYX_PRICE}
+    ALTER COLUMN "date" SET NOT NULL;
+  `);
+
+  // END OF PATCH
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT} (

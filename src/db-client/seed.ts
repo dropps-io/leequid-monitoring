@@ -55,7 +55,7 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.LYX_PRICE} (
       "blockNumber" INT NOT NULL PRIMARY KEY,
-      "date" TIMESTAMPTZ NOT NULL,
+      "date" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       "usd" NUMERIC NOT NULL,
       "eur" NUMERIC NOT NULL,
       "jpy" NUMERIC NOT NULL,
@@ -69,29 +69,11 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
     )
   `);
 
-  // TO DELETE WHEN MIGRATION DONE
-
-  const columnExistsResult = await client.query(`
-    SELECT column_name 
-    FROM information_schema.columns 
-    WHERE table_name='${DB_MONITORING_TABLE.LYX_PRICE}' 
-    AND column_name='date';
-  `);
-
-  if (columnExistsResult.rowCount === 0) {
-    await client.query(`
-    ALTER TABLE ${DB_MONITORING_TABLE.LYX_PRICE}
-    ADD COLUMN "date" TIMESTAMPTZ;
-  `);
-  }
-
-  await fillHistoricalLyxPrice(client);
-
   // Apply patch to add missing columns
 
   await client.query(`
     ALTER TABLE ${DB_MONITORING_TABLE.LYX_PRICE}
-    ALTER COLUMN "date" SET NOT NULL;
+    ALTER COLUMN "date" SET DEFAULT NOW();
   `);
 
   // END OF PATCH

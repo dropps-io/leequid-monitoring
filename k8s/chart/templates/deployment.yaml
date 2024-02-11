@@ -17,7 +17,6 @@ spec:
           image: europe-west1-docker.pkg.dev/dropps-indexing/leequid/monitoring-app:{{ .Values.deployEnv }}
           imagePullPolicy: Always
           readinessProbe:
-            initialDelaySeconds: 400
             httpGet:
               path: /healthz
               port: {{ .Values.targetPort }}

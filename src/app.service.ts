@@ -17,6 +17,8 @@ import { LiquidityPoolContractStateDto } from './dto/liquidity-pool-contract-sta
 import { SUPPORTED_CURRENCY } from './rewards-tracking/types';
 import { RewardsBalance } from './db-client/types';
 import { RewardsTrackingService } from './rewards-tracking/rewards-tracking.service';
+import { StakingRewards } from './types/staking-rewards';
+import { OPERATOR_SLUG } from './types/enums';
 
 @Injectable()
 export class AppService {
@@ -31,6 +33,9 @@ export class AppService {
     totalStaked: number;
     APR: number;
     APY: number;
+    activatedValidators: number;
+    pendingValidators: number;
+    exitedValidators: number;
   }> {
     const stakers = await this.dbClient.fetchNumberOfStakers();
     const pendingValidators = await this.ethersService.pendingValidators();
@@ -43,7 +48,15 @@ export class AppService {
 
     const APR = await this.getSevenDaysAPR();
     const APY = ((1 + APR / 100 / 365) ** 365 - 1) * 100;
-    return { stakers, totalStaked, APR, APY };
+    return {
+      stakers,
+      totalStaked,
+      APR,
+      APY,
+      activatedValidators: Number(activatedValidators),
+      pendingValidators: Number(pendingValidators),
+      exitedValidators: Number(exitedValidators),
+    };
   }
 
   async fetchRewardsContractState(): Promise<RewardsContractStateDto> {
@@ -326,6 +339,44 @@ export class AppService {
           date: row.date,
         };
       }),
+    };
+  }
+
+  public async getStakingRewards(): Promise<StakingRewards> {
+    const lyxPrices = await this.dbClient.fetchLyxPrices(undefined, undefined, 1);
+    const latestPrice = lyxPrices[lyxPrices.length - 1].usd;
+    const protocolState = await this.fetchProtocolState();
+    const sLyxTotalSupply = await this.ethersService.sLyxTotalSupply();
+    const operatorState = await this.fetchOperatorsState();
+
+    return {
+      name: 'LEEQUID',
+      totalUsers: protocolState.stakers,
+      totalBalanceUsd: protocolState.totalStaked * latestPrice,
+      supportedAssets: [
+        {
+          symbol: 'sLYX',
+          slug: 'staked-lyx-token',
+          baseSlug: 'lukso-token-2',
+          supply: parseInt(formatEther(sLyxTotalSupply)),
+          apr: protocolState.APR,
+          fee: 10,
+          users: protocolState.stakers,
+          unstakingTime: 60 * 60 * 24 * 2,
+          exchangeRatio: 1,
+          validators: protocolState.activatedValidators - protocolState.exitedValidators,
+          nodeOperators: operatorState.length,
+          nodeOperatorBreakdown: operatorState.map((operator) => {
+            return {
+              operatorSlug: OPERATOR_SLUG[operator.address],
+              balance: (operator.activatedValidators - operator.exitedValidators) * 32,
+              fee: operator.address === OPERATOR_LEEQUID_ADR ? 10 : 5,
+              validators: operator.activatedValidators - operator.exitedValidators,
+              validatorBreakdown: [],
+            };
+          }),
+        },
+      ],
     };
   }
 }

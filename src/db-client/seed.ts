@@ -4,7 +4,6 @@ import pg from 'pg';
 
 import { POSTGRES_URI } from '../globals';
 import { DB_MONITORING_TABLE } from './types';
-import { fillHistoricalLyxPrice } from './tmp/fill-historical-lyx-price';
 
 if (process.env.NODE_ENV === 'test') config({ path: path.resolve(process.cwd(), '.env.test') });
 
@@ -68,15 +67,6 @@ export const seedMonitoring = async (dropTables?: boolean): Promise<void> => {
       "inr" NUMERIC NOT NULL
     )
   `);
-
-  // Apply patch to add missing columns
-
-  await client.query(`
-    ALTER TABLE ${DB_MONITORING_TABLE.LYX_PRICE}
-    ALTER COLUMN "date" SET DEFAULT NOW();
-  `);
-
-  // END OF PATCH
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT} (

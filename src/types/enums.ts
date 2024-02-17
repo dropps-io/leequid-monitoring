@@ -18,6 +18,7 @@ export enum VALIDATOR_STATUS {
 
 export enum OPERATOR_SLUG {
   '0x6aa0757bc4ffdC9f0DEB5E9fA08173c07EF2afCc' = 'stakelab',
-  '0x6D975E3F0C15DB1BbF987DA6aC244aBb9fAA6163' = 'leequid',
+  '0x6D975E3F0C15DB1BbF987DA6aC244aBb9fAA6163' = 'leequid-nodes',
+  '0xb840894501949ae9b6cB8C83085BfE579a7bc4e1' = 'staking-cabin',
   '0xD692Ba892a902810a2EE3fA41C1D8DcD652D47Ab' = 'leequid-testnet',
 }

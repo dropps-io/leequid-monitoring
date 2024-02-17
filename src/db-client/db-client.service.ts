@@ -187,7 +187,9 @@ export class DbClientService {
   public async fetchRewardsBalances(address: string, limit?: number): Promise<RewardsBalance[]> {
     return await this.executeQueryMonitoring<RewardsBalance>(
       `
-        SELECT * FROM ${DB_MONITORING_TABLE.REWARDS_BALANCE} WHERE "address" = $1 ORDER BY "blockNumber" DESC ${limit ? `LIMIT ${limit}` : ''};
+        SELECT * FROM ${
+          DB_MONITORING_TABLE.REWARDS_BALANCE
+        } WHERE "address" = $1 ORDER BY "blockNumber" DESC ${limit ? `LIMIT ${limit}` : ''};
       `,
       [address],
     );

@@ -50,6 +50,7 @@ export class RewardsTrackingService {
 
     const timestamp = await this.ethersService.getBlockTimestamp(lastRewardsUpdateBlock);
     const allStakers = await this.dbClient.fetchStakersList();
+    const operators = await this.dbClient.getOperators();
 
     const previousRewardsBalance = await this.dbClient.fetchRewardBalancesAtBlock(
       latestMonitoredBlock,
@@ -57,17 +58,18 @@ export class RewardsTrackingService {
 
     const merkleDistribution = await this.fetchMerkleDistribution();
 
-    const promises = allStakers.map((staker) =>
-      limit(async () => {
-        return await this.createRewardsBalanceRowFor(
-          staker,
-          lastRewardsUpdateBlock,
-          timestamp,
-          latestMonitoredBlock,
-          previousRewardsBalance.find((r) => r.address.toLowerCase() === staker.toLowerCase()),
-          merkleDistribution[staker] || undefined,
-        );
-      }),
+    const promises = [...allStakers, ...operators.map((operator) => operator.address)].map(
+      (staker) =>
+        limit(async () => {
+          return await this.createRewardsBalanceRowFor(
+            staker,
+            lastRewardsUpdateBlock,
+            timestamp,
+            latestMonitoredBlock,
+            previousRewardsBalance.find((r) => r.address.toLowerCase() === staker.toLowerCase()),
+            merkleDistribution[staker] || undefined,
+          );
+        }),
     );
 
     const rewardsBalances: RewardsBalance[] = await Promise.all(promises);

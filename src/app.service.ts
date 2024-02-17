@@ -3,11 +3,7 @@ import { formatEther, parseEther } from 'ethers';
 
 import { EthersService } from './ethers/ethers.service';
 import { DbClientService } from './db-client/db-client.service';
-import {
-  CONTRACT_POOL,
-  CONTRACT_REWARDS,
-  ORCHESTRATOR_KEY_ADDRESS,
-} from './globals';
+import { CONTRACT_POOL, CONTRACT_REWARDS, ORCHESTRATOR_KEY_ADDRESS } from './globals';
 import { RewardsContractStateDto } from './dto/rewards-contract-state.dto';
 import { SLyxContractStateDto } from './dto/slyx-contract-state.dto';
 import { PoolContractStateDto } from './dto/pool-contract-state.dto';
@@ -87,7 +83,7 @@ export class AppService {
     };
   }
 
-  async fetchOperatorTotalRewards(): Promise<{operator: string, totalRewards: string}[]> {
+  async fetchOperatorTotalRewards(): Promise<{ operator: string; totalRewards: string }[]> {
     const operators = await this.dbClient.getOperators();
     const rewards = await Promise.all(
       operators.map((operator) => {
@@ -95,13 +91,14 @@ export class AppService {
       }),
     );
 
-    return rewards.filter((reward) => reward.length > 0)
-    .map((reward) => {
-      return {
-        operator: reward[0].address,
-        totalRewards: reward[0].totalRewards,
-      };
-    });
+    return rewards
+      .filter((reward) => reward.length > 0)
+      .map((reward) => {
+        return {
+          operator: reward[0].address,
+          totalRewards: reward[0].totalRewards,
+        };
+      });
   }
 
   async fetchSLyxContractState(): Promise<SLyxContractStateDto> {
@@ -366,15 +363,17 @@ export class AppService {
           exchangeRatio: 1,
           validators: protocolState.activatedValidators - protocolState.exitedValidators,
           nodeOperators: operatorState.length,
-          nodeOperatorBreakdown: operatorState.map((operator) => {
-            return {
-              operatorSlug: OPERATOR_SLUG[operator.address],
-              balance: (operator.activatedValidators - operator.exitedValidators) * 32,
-              fee: 5,
-              validators: operator.activatedValidators - operator.exitedValidators,
-              validatorBreakdown: [],
-            };
-          }),
+          nodeOperatorBreakdown: operatorState
+            .filter((operator) => OPERATOR_SLUG[operator.address])
+            .map((operator) => {
+              return {
+                operatorSlug: OPERATOR_SLUG[operator.address],
+                balance: (operator.activatedValidators - operator.exitedValidators) * 32,
+                fee: 5,
+                validators: operator.activatedValidators - operator.exitedValidators,
+                validatorBreakdown: [],
+              };
+            }),
         },
       ],
     };

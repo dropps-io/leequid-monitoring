@@ -51,8 +51,6 @@ spec:
               value: {{ .Values.ORCHESTRATOR_KEY_ADDRESS }}
             - name: OPERATOR_LEEQUID_ADR
               value: {{ .Values.OPERATOR_LEEQUID_ADR }}
-            - name: OPERATOR_STAKELAB_ADR
-              value: {{ .Values.OPERATOR_STAKELAB_ADR }}
             - name: DEPLOY_ENV
               value: {{ .Values.deployEnv }}
             - name: INDEXING_CONNECTION_STRING

@@ -302,6 +302,8 @@ export class AppService {
         acc + Number(event.args.activatedValidators) - Number(event.args.exitedValidators),
       0,
     );
+    
+    if (rewardUpdateVotes.length === 0) return 0;
 
     const avSLyxSevenDays = parseEther(
       ((sumEffectiveValidators / rewardUpdateVotes.length) * 32).toString(),

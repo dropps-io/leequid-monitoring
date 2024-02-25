@@ -10,22 +10,6 @@ export class RewardsContractStateDto {
   readonly contractBalance: string;
 
   @ApiProperty({
-    name: 'leequidRewardsBalance',
-    description: 'The amount of rewards available for leequid, in wei',
-    example: '10000000000000',
-    required: true,
-  })
-  readonly leequidRewardsBalance: string;
-
-  @ApiProperty({
-    name: 'stakelabRewardsBalance',
-    description: 'The amount of rewards available for the stakelab, in wei',
-    example: '10000000000000',
-    required: true,
-  })
-  readonly stakelabRewardsBalance: string;
-
-  @ApiProperty({
     name: 'protocolFee',
     description: 'The fee taken by the protocol, in percentage',
     example: 10, // 10%

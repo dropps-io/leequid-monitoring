@@ -3,13 +3,7 @@ import { formatEther, parseEther } from 'ethers';
 
 import { EthersService } from './ethers/ethers.service';
 import { DbClientService } from './db-client/db-client.service';
-import {
-  CONTRACT_POOL,
-  CONTRACT_REWARDS,
-  OPERATOR_LEEQUID_ADR,
-  OPERATOR_STAKELAB_ADR,
-  ORCHESTRATOR_KEY_ADDRESS,
-} from './globals';
+import { CONTRACT_POOL, CONTRACT_REWARDS, ORCHESTRATOR_KEY_ADDRESS } from './globals';
 import { RewardsContractStateDto } from './dto/rewards-contract-state.dto';
 import { SLyxContractStateDto } from './dto/slyx-contract-state.dto';
 import { PoolContractStateDto } from './dto/pool-contract-state.dto';
@@ -17,6 +11,8 @@ import { LiquidityPoolContractStateDto } from './dto/liquidity-pool-contract-sta
 import { SUPPORTED_CURRENCY } from './rewards-tracking/types';
 import { RewardsBalance } from './db-client/types';
 import { RewardsTrackingService } from './rewards-tracking/rewards-tracking.service';
+import { StakingRewards } from './types/staking-rewards';
+import { OPERATOR_SLUG } from './types/enums';
 
 @Injectable()
 export class AppService {
@@ -31,6 +27,9 @@ export class AppService {
     totalStaked: number;
     APR: number;
     APY: number;
+    activatedValidators: number;
+    pendingValidators: number;
+    exitedValidators: number;
   }> {
     const stakers = await this.dbClient.fetchNumberOfStakers();
     const pendingValidators = await this.ethersService.pendingValidators();
@@ -43,7 +42,15 @@ export class AppService {
 
     const APR = await this.getSevenDaysAPR();
     const APY = ((1 + APR / 100 / 365) ** 365 - 1) * 100;
-    return { stakers, totalStaked, APR, APY };
+    return {
+      stakers,
+      totalStaked,
+      APR,
+      APY,
+      activatedValidators: Number(activatedValidators),
+      pendingValidators: Number(pendingValidators),
+      exitedValidators: Number(exitedValidators),
+    };
   }
 
   async fetchRewardsContractState(): Promise<RewardsContractStateDto> {
@@ -55,9 +62,6 @@ export class AppService {
       totalCashedOut,
       rewardPerToken,
       totalAvailableRewards,
-      merkleDistribution,
-      leequidRewardsBalance,
-      stakelabRewardsBalance,
     ] = await Promise.all([
       this.ethersService.balanceOf(CONTRACT_REWARDS),
       this.ethersService.protocolFee(),
@@ -66,25 +70,10 @@ export class AppService {
       this.ethersService.totalCashedOut(),
       this.ethersService.rewardPerToken(),
       this.ethersService.totalAvailableRewards(),
-      this.rewardTracking.fetchMerkleDistribution(),
-      this.ethersService.rewardsBalanceOf(OPERATOR_LEEQUID_ADR),
-      this.ethersService.rewardsBalanceOf(OPERATOR_STAKELAB_ADR),
     ]);
 
     return {
       contractBalance: contractBalance.toString(),
-      leequidRewardsBalance: (
-        leequidRewardsBalance +
-        (merkleDistribution[OPERATOR_LEEQUID_ADR]
-          ? BigInt(merkleDistribution[OPERATOR_LEEQUID_ADR].values[0])
-          : BigInt(0))
-      ).toString(),
-      stakelabRewardsBalance: (
-        stakelabRewardsBalance +
-        (merkleDistribution[OPERATOR_STAKELAB_ADR]
-          ? BigInt(merkleDistribution[OPERATOR_STAKELAB_ADR].values[0])
-          : BigInt(0))
-      ).toString(),
       protocolFee: parseInt(protocolFee.toString()) / 100,
       totalRewards: totalRewards.toString(),
       totalFeesCollected: totalFeesCollected.toString(),
@@ -92,6 +81,24 @@ export class AppService {
       rewardPerToken: rewardPerToken.toString(),
       totalAvailableRewards: totalAvailableRewards.toString(),
     };
+  }
+
+  async fetchOperatorTotalRewards(): Promise<{ operator: string; totalRewards: string }[]> {
+    const operators = await this.dbClient.getOperators();
+    const rewards = await Promise.all(
+      operators.map((operator) => {
+        return this.dbClient.fetchRewardsBalances(operator.address, 1);
+      }),
+    );
+
+    return rewards
+      .filter((reward) => reward.length > 0)
+      .map((reward) => {
+        return {
+          operator: reward[0].address,
+          totalRewards: reward[0].totalRewards,
+        };
+      });
   }
 
   async fetchSLyxContractState(): Promise<SLyxContractStateDto> {
@@ -176,6 +183,7 @@ export class AppService {
       activeValidators,
       pendingValidators,
       exitedValidators,
+      operatorTotalRewards,
     ] = await Promise.all([
       this.fetchRewardsContractState(),
       this.fetchSLyxContractState(),
@@ -185,6 +193,7 @@ export class AppService {
       this.dbClient.countEffectiveValidatorsPerOperator(),
       this.dbClient.countPendingValidatorsPerOperator(),
       this.dbClient.countExitedValidatorsPerOperator(),
+      this.fetchOperatorTotalRewards(),
     ]);
 
     // Convert the data to Prometheus format
@@ -196,8 +205,6 @@ export class AppService {
     metrics += `rewards_contract_total_cashed_out ${rewardsContractState.totalCashedOut}\n`;
     metrics += `rewards_contract_reward_per_token ${rewardsContractState.rewardPerToken}\n`;
     metrics += `rewards_contract_total_available_rewards ${rewardsContractState.totalAvailableRewards}\n`;
-    metrics += `rewards_contract_leequid_rewards_balance ${rewardsContractState.leequidRewardsBalance}\n`;
-    metrics += `rewards_contract_stakelab_rewards_balance ${rewardsContractState.stakelabRewardsBalance}\n`;
     metrics += `slyx_contract_total_claimable_unstakes ${slyxContractState.totalClaimableUnstakes}\n`;
     metrics += `slyx_contract_total_pending_unstake ${slyxContractState.totalPendingUnstake}\n`;
     metrics += `slyx_contract_total_unstaked ${slyxContractState.totalUnstaked}\n`;
@@ -226,6 +233,9 @@ export class AppService {
     }
     for (const operator of exitedValidators) {
       metrics += `exited_validators{operator="${operator.operator}"} ${operator.count}\n`;
+    }
+    for (const operator of operatorTotalRewards) {
+      metrics += `operator_total_rewards{operator="${operator.operator}"} ${operator.totalRewards}\n`;
     }
 
     return metrics;
@@ -292,6 +302,8 @@ export class AppService {
         acc + Number(event.args.activatedValidators) - Number(event.args.exitedValidators),
       0,
     );
+    
+    if (rewardUpdateVotes.length === 0) return 0;
 
     const avSLyxSevenDays = parseEther(
       ((sumEffectiveValidators / rewardUpdateVotes.length) * 32).toString(),
@@ -326,6 +338,46 @@ export class AppService {
           date: row.date,
         };
       }),
+    };
+  }
+
+  public async getStakingRewards(): Promise<StakingRewards> {
+    const lyxPrices = await this.dbClient.fetchLyxPrices(undefined, undefined, 1);
+    const latestPrice = lyxPrices[lyxPrices.length - 1].usd;
+    const protocolState = await this.fetchProtocolState();
+    const sLyxTotalSupply = await this.ethersService.sLyxTotalSupply();
+    const operatorState = await this.fetchOperatorsState();
+
+    return {
+      name: 'LEEQUID',
+      totalUsers: protocolState.stakers,
+      totalBalanceUsd: protocolState.totalStaked * latestPrice,
+      supportedAssets: [
+        {
+          symbol: 'sLYX',
+          slug: 'staked-lyx-token',
+          baseSlug: 'lukso-token-2',
+          supply: parseInt(formatEther(sLyxTotalSupply)),
+          apr: protocolState.APR,
+          fee: 10,
+          users: protocolState.stakers,
+          unstakingTime: 60 * 60 * 24 * 2,
+          exchangeRatio: 1,
+          validators: protocolState.activatedValidators - protocolState.exitedValidators,
+          nodeOperators: operatorState.length,
+          nodeOperatorBreakdown: operatorState
+            .filter((operator) => OPERATOR_SLUG[operator.address])
+            .map((operator) => {
+              return {
+                operatorSlug: OPERATOR_SLUG[operator.address],
+                balance: (operator.activatedValidators - operator.exitedValidators) * 32,
+                fee: 5,
+                validators: operator.activatedValidators - operator.exitedValidators,
+                validatorBreakdown: [],
+              };
+            }),
+        },
+      ],
     };
   }
 }

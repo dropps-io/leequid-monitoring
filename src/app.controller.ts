@@ -106,4 +106,17 @@ export class AppController {
       throwHTTPError('Internal Error', 500);
     }
   }
+
+  @Get('staking-rewards')
+  async stakingRewards(@Res() res: Response): Promise<void> {
+    try {
+      const rewards = await this.monitoringService.getStakingRewards();
+      res.send(rewards);
+    } catch (error) {
+      this.logger.error(`Error while getting staking rewards: ${error.message}`, {
+        stack: error.stack,
+      });
+      throwHTTPError('Internal Error', 500);
+    }
+  }
 }

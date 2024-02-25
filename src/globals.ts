@@ -25,7 +25,6 @@ export const MONITORING_CRON = getConfigOrThrow<string>('cron_checks');
 export const CRON_PROTOCOL_CHECKPOINT = getConfigOrThrow<string>('cron_protocol_checkpoint');
 
 export const OPERATOR_LEEQUID_ADR = getEnvOrThrow<string>('OPERATOR_LEEQUID_ADR');
-export const OPERATOR_STAKELAB_ADR = getEnvOrThrow<string>('OPERATOR_STAKELAB_ADR');
 
 export const CONSENSUS_API_URL = getEnvOrThrow('CONSENSUS_API_URL');
 export const COINGECKO_API_URL = 'https://api.coingecko.com/api/v3';

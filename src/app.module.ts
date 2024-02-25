@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module } from '@nestjs/common';
 import { ThrottlerModule } from '@nestjs/throttler';
 
 import { AppController } from './app.controller';
@@ -8,6 +8,7 @@ import { EthersModule } from './ethers/ethers.module';
 import { SchedulingModule } from './scheduling/scheduling.module';
 import { LoggerModule } from './logger/logger.module';
 import { RewardsTrackingModule } from './rewards-tracking/rewards-tracking.module';
+import { LoggerMiddleware } from './middlewares/logger.middleware';
 
 @Module({
   imports: [
@@ -26,4 +27,8 @@ import { RewardsTrackingModule } from './rewards-tracking/rewards-tracking.modul
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule {
+  configure(consumer: MiddlewareConsumer): void {
+    consumer.apply(LoggerMiddleware).forRoutes('*');
+  }
+}

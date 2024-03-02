@@ -107,6 +107,19 @@ export class AppController {
     }
   }
 
+  @Get('/protocol-checkpoints')
+  async protocolCheckpoints(@Res() res: Response): Promise<void> {
+    try {
+      const checkpoints = await this.monitoringService.getProtocolCheckpoints();
+      res.send(checkpoints);
+    } catch (error) {
+      this.logger.error(`Error while getting protocol checkpoints: ${error.message}`, {
+        stack: error.stack,
+      });
+      throwHTTPError('Internal Error', 500);
+    }
+  }
+
   @Get('staking-rewards')
   async stakingRewards(@Res() res: Response): Promise<void> {
     try {

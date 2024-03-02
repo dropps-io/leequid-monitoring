@@ -9,13 +9,18 @@ import { SLyxContractStateDto } from './dto/slyx-contract-state.dto';
 import { PoolContractStateDto } from './dto/pool-contract-state.dto';
 import { LiquidityPoolContractStateDto } from './dto/liquidity-pool-contract-state.dto';
 import { SUPPORTED_CURRENCY } from './rewards-tracking/types';
-import { RewardsBalance } from './db-client/types';
+import { ProtocolCheckpoint, RewardsBalance } from './db-client/types';
 import { RewardsTrackingService } from './rewards-tracking/rewards-tracking.service';
 import { StakingRewards } from './types/staking-rewards';
 import { OPERATOR_SLUG } from './types/enums';
 
 @Injectable()
 export class AppService {
+  protected protocolCheckpoints: {
+    lastFetch: number;
+    data: ProtocolCheckpoint[];
+  };
+
   constructor(
     protected readonly ethersService: EthersService,
     protected readonly rewardTracking: RewardsTrackingService,
@@ -302,7 +307,7 @@ export class AppService {
         acc + Number(event.args.activatedValidators) - Number(event.args.exitedValidators),
       0,
     );
-    
+
     if (rewardUpdateVotes.length === 0) return 0;
 
     const avSLyxSevenDays = parseEther(
@@ -379,5 +384,20 @@ export class AppService {
         },
       ],
     };
+  }
+
+  public async getProtocolCheckpoints(): Promise<ProtocolCheckpoint[]> {
+    if (
+      this.protocolCheckpoints &&
+      this.protocolCheckpoints.lastFetch > Date.now() - 1000 * 60 * 60 * 12
+    ) {
+      return this.protocolCheckpoints.data;
+    }
+    const response = await this.dbClient.fetchProtocolCheckpoints();
+    this.protocolCheckpoints = {
+      lastFetch: Date.now(),
+      data: response,
+    };
+    return response;
   }
 }

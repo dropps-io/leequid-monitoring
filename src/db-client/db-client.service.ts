@@ -227,6 +227,12 @@ export class DbClientService {
     }
   }
 
+  public async fetchProtocolCheckpoints(): Promise<ProtocolCheckpoint[]> {
+    return await this.executeQueryMonitoring<ProtocolCheckpoint>(
+      `SELECT * FROM ${DB_MONITORING_TABLE.PROTOCOL_CHECKPOINT} ORDER BY "blockNumber" DESC;`,
+    );
+  }
+
   @DebugLogger()
   public async insertOperator(address: string, merkleRoot: string): Promise<void> {
     await this.monitoringClient.query(
